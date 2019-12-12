@@ -1,0 +1,441 @@
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 1
+
+
+   1              		.cpu cortex-m7
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"bsp_driver_sd.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.BSP_SD_IsDetected,"ax",%progbits
+  18              		.align	1
+  19              		.global	BSP_SD_IsDetected
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  23              		.fpu fpv5-sp-d16
+  25              	BSP_SD_IsDetected:
+  26              	.LFB136:
+  27              		.file 1 "Src/bsp_driver_sd.c"
+   1:Src/bsp_driver_sd.c **** /**
+   2:Src/bsp_driver_sd.c ****  ******************************************************************************
+   3:Src/bsp_driver_sd.c ****   * @file    bsp_driver_sd.c for F7 (based on stm32756g_eval_sd.c)
+   4:Src/bsp_driver_sd.c ****   * @brief   This file includes a generic uSD card driver.
+   5:Src/bsp_driver_sd.c ****   ******************************************************************************
+   6:Src/bsp_driver_sd.c ****   * This notice applies to any and all portions of this file
+   7:Src/bsp_driver_sd.c ****   * that are not between comment pairs USER CODE BEGIN and
+   8:Src/bsp_driver_sd.c ****   * USER CODE END. Other portions of this file, whether 
+   9:Src/bsp_driver_sd.c ****   * inserted by the user or by software development tools
+  10:Src/bsp_driver_sd.c ****   * are owned by their respective copyright owners.
+  11:Src/bsp_driver_sd.c ****   *
+  12:Src/bsp_driver_sd.c ****   * Copyright (c) 2018 STMicroelectronics International N.V. 
+  13:Src/bsp_driver_sd.c ****   * All rights reserved.
+  14:Src/bsp_driver_sd.c ****   *
+  15:Src/bsp_driver_sd.c ****   * Redistribution and use in source and binary forms, with or without 
+  16:Src/bsp_driver_sd.c ****   * modification, are permitted, provided that the following conditions are met:
+  17:Src/bsp_driver_sd.c ****   *
+  18:Src/bsp_driver_sd.c ****   * 1. Redistribution of source code must retain the above copyright notice, 
+  19:Src/bsp_driver_sd.c ****   *    this list of conditions and the following disclaimer.
+  20:Src/bsp_driver_sd.c ****   * 2. Redistributions in binary form must reproduce the above copyright notice,
+  21:Src/bsp_driver_sd.c ****   *    this list of conditions and the following disclaimer in the documentation
+  22:Src/bsp_driver_sd.c ****   *    and/or other materials provided with the distribution.
+  23:Src/bsp_driver_sd.c ****   * 3. Neither the name of STMicroelectronics nor the names of other 
+  24:Src/bsp_driver_sd.c ****   *    contributors to this software may be used to endorse or promote products 
+  25:Src/bsp_driver_sd.c ****   *    derived from this software without specific written permission.
+  26:Src/bsp_driver_sd.c ****   * 4. This software, including modifications and/or derivative works of this 
+  27:Src/bsp_driver_sd.c ****   *    software, must execute solely and exclusively on microcontroller or
+  28:Src/bsp_driver_sd.c ****   *    microprocessor devices manufactured by or for STMicroelectronics.
+  29:Src/bsp_driver_sd.c ****   * 5. Redistribution and use of this software other than as permitted under 
+  30:Src/bsp_driver_sd.c ****   *    this license is void and will automatically terminate your rights under 
+  31:Src/bsp_driver_sd.c ****   *    this license. 
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 2
+
+
+  32:Src/bsp_driver_sd.c ****   *
+  33:Src/bsp_driver_sd.c ****   * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
+  34:Src/bsp_driver_sd.c ****   * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
+  35:Src/bsp_driver_sd.c ****   * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  36:Src/bsp_driver_sd.c ****   * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
+  37:Src/bsp_driver_sd.c ****   * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  38:Src/bsp_driver_sd.c ****   * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  39:Src/bsp_driver_sd.c ****   * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  40:Src/bsp_driver_sd.c ****   * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
+  41:Src/bsp_driver_sd.c ****   * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+  42:Src/bsp_driver_sd.c ****   * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  43:Src/bsp_driver_sd.c ****   * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  44:Src/bsp_driver_sd.c ****   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  45:Src/bsp_driver_sd.c ****   *
+  46:Src/bsp_driver_sd.c ****   ******************************************************************************
+  47:Src/bsp_driver_sd.c ****   */
+  48:Src/bsp_driver_sd.c **** 
+  49:Src/bsp_driver_sd.c **** #ifdef OLD_API
+  50:Src/bsp_driver_sd.c **** /* kept to avoid issue when migrating old projects. */
+  51:Src/bsp_driver_sd.c **** /* USER CODE BEGIN 0 */
+  52:Src/bsp_driver_sd.c **** 
+  53:Src/bsp_driver_sd.c **** /* USER CODE END 0 */
+  54:Src/bsp_driver_sd.c **** #else
+  55:Src/bsp_driver_sd.c **** /* USER CODE BEGIN FirstSection */
+  56:Src/bsp_driver_sd.c **** /* can be used to modify / undefine following code or add new definitions */
+  57:Src/bsp_driver_sd.c **** /* USER CODE END FirstSection */
+  58:Src/bsp_driver_sd.c **** /* Includes ------------------------------------------------------------------*/
+  59:Src/bsp_driver_sd.c **** #include "bsp_driver_sd.h"
+  60:Src/bsp_driver_sd.c **** 
+  61:Src/bsp_driver_sd.c **** /* Extern variables ---------------------------------------------------------*/ 
+  62:Src/bsp_driver_sd.c ****   
+  63:Src/bsp_driver_sd.c **** extern SD_HandleTypeDef hsd1;
+  64:Src/bsp_driver_sd.c **** 
+  65:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeInitSection */
+  66:Src/bsp_driver_sd.c **** /* can be used to modify / undefine following code or add code */
+  67:Src/bsp_driver_sd.c **** #if 0
+  68:Src/bsp_driver_sd.c **** 
+  69:Src/bsp_driver_sd.c **** /* USER CODE END BeforeInitSection */
+  70:Src/bsp_driver_sd.c **** /**
+  71:Src/bsp_driver_sd.c ****   * @brief  Initializes the SD card device.
+  72:Src/bsp_driver_sd.c ****   * @retval SD status
+  73:Src/bsp_driver_sd.c ****   */
+  74:Src/bsp_driver_sd.c **** uint8_t BSP_SD_Init(void)
+  75:Src/bsp_driver_sd.c **** {
+  76:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+  77:Src/bsp_driver_sd.c ****   /* Check if the SD card is plugged in the slot */
+  78:Src/bsp_driver_sd.c ****   if (BSP_SD_IsDetected() != SD_PRESENT)
+  79:Src/bsp_driver_sd.c ****   {
+  80:Src/bsp_driver_sd.c ****     return MSD_ERROR_SD_NOT_PRESENT;
+  81:Src/bsp_driver_sd.c ****   }
+  82:Src/bsp_driver_sd.c ****   /* HAL SD initialization */
+  83:Src/bsp_driver_sd.c ****   sd_state = HAL_SD_Init(&hsd1);
+  84:Src/bsp_driver_sd.c ****   /* Configure SD Bus width (4 bits mode selected) */
+  85:Src/bsp_driver_sd.c ****   if (sd_state == MSD_OK)
+  86:Src/bsp_driver_sd.c ****   {
+  87:Src/bsp_driver_sd.c ****     /* Enable wide operation */
+  88:Src/bsp_driver_sd.c ****     if (HAL_SD_ConfigWideBusOperation(&hsd1, SDMMC_BUS_WIDE_4B) != HAL_OK)
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 3
+
+
+  89:Src/bsp_driver_sd.c ****     {
+  90:Src/bsp_driver_sd.c ****       sd_state = MSD_ERROR;
+  91:Src/bsp_driver_sd.c ****     }
+  92:Src/bsp_driver_sd.c ****   }
+  93:Src/bsp_driver_sd.c **** 
+  94:Src/bsp_driver_sd.c ****   return sd_state;
+  95:Src/bsp_driver_sd.c **** }
+  96:Src/bsp_driver_sd.c **** /* USER CODE BEGIN AfterInitSection */
+  97:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+  98:Src/bsp_driver_sd.c **** /* USER CODE END AfterInitSection */
+  99:Src/bsp_driver_sd.c **** 
+ 100:Src/bsp_driver_sd.c **** /**
+ 101:Src/bsp_driver_sd.c ****   * @brief  Configures Interrupt mode for SD detection pin.
+ 102:Src/bsp_driver_sd.c ****   * @retval Returns 0 in success otherwise 1. 
+ 103:Src/bsp_driver_sd.c ****   */
+ 104:Src/bsp_driver_sd.c **** uint8_t BSP_SD_ITConfig(void)
+ 105:Src/bsp_driver_sd.c **** {  
+ 106:Src/bsp_driver_sd.c ****   /* TBI: add user code here depending on the hardware configuration used */
+ 107:Src/bsp_driver_sd.c ****   
+ 108:Src/bsp_driver_sd.c ****   return (uint8_t)0;
+ 109:Src/bsp_driver_sd.c **** }
+ 110:Src/bsp_driver_sd.c **** 
+ 111:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeReadBlocksSection */
+ 112:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 113:Src/bsp_driver_sd.c **** /* USER CODE END BeforeReadBlocksSection */
+ 114:Src/bsp_driver_sd.c **** /**
+ 115:Src/bsp_driver_sd.c ****   * @brief  Reads block(s) from a specified address in an SD card, in polling mode.
+ 116:Src/bsp_driver_sd.c ****   * @param  pData: Pointer to the buffer that will contain the data to transmit
+ 117:Src/bsp_driver_sd.c ****   * @param  ReadAddr: Address from where data is to be read
+ 118:Src/bsp_driver_sd.c ****   * @param  NumOfBlocks: Number of SD blocks to read
+ 119:Src/bsp_driver_sd.c ****   * @param  Timeout: Timeout for read operation
+ 120:Src/bsp_driver_sd.c ****   * @retval SD status
+ 121:Src/bsp_driver_sd.c ****   */
+ 122:Src/bsp_driver_sd.c **** uint8_t BSP_SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeou
+ 123:Src/bsp_driver_sd.c **** {
+ 124:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+ 125:Src/bsp_driver_sd.c **** 
+ 126:Src/bsp_driver_sd.c ****   if (HAL_SD_ReadBlocks(&hsd1, (uint8_t *)pData, ReadAddr, NumOfBlocks, Timeout) != HAL_OK)
+ 127:Src/bsp_driver_sd.c ****   {
+ 128:Src/bsp_driver_sd.c ****     sd_state = MSD_ERROR;
+ 129:Src/bsp_driver_sd.c ****   }
+ 130:Src/bsp_driver_sd.c **** 
+ 131:Src/bsp_driver_sd.c ****   return sd_state;  
+ 132:Src/bsp_driver_sd.c **** }
+ 133:Src/bsp_driver_sd.c **** 
+ 134:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeWriteBlocksSection */
+ 135:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 136:Src/bsp_driver_sd.c **** /* USER CODE END BeforeWriteBlocksSection */
+ 137:Src/bsp_driver_sd.c **** /**
+ 138:Src/bsp_driver_sd.c ****   * @brief  Writes block(s) to a specified address in an SD card, in polling mode. 
+ 139:Src/bsp_driver_sd.c ****   * @param  pData: Pointer to the buffer that will contain the data to transmit
+ 140:Src/bsp_driver_sd.c ****   * @param  WriteAddr: Address from where data is to be written
+ 141:Src/bsp_driver_sd.c ****   * @param  NumOfBlocks: Number of SD blocks to write
+ 142:Src/bsp_driver_sd.c ****   * @param  Timeout: Timeout for write operation
+ 143:Src/bsp_driver_sd.c ****   * @retval SD status
+ 144:Src/bsp_driver_sd.c ****   */
+ 145:Src/bsp_driver_sd.c **** uint8_t BSP_SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks, uint32_t Time
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 4
+
+
+ 146:Src/bsp_driver_sd.c **** {
+ 147:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+ 148:Src/bsp_driver_sd.c **** 
+ 149:Src/bsp_driver_sd.c ****   if (HAL_SD_WriteBlocks(&hsd1, (uint8_t *)pData, WriteAddr, NumOfBlocks, Timeout) != HAL_OK) 
+ 150:Src/bsp_driver_sd.c ****   {
+ 151:Src/bsp_driver_sd.c ****     sd_state = MSD_ERROR;
+ 152:Src/bsp_driver_sd.c ****   }
+ 153:Src/bsp_driver_sd.c **** 
+ 154:Src/bsp_driver_sd.c ****   return sd_state;  
+ 155:Src/bsp_driver_sd.c **** }
+ 156:Src/bsp_driver_sd.c **** 
+ 157:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeReadDMABlocksSection */
+ 158:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 159:Src/bsp_driver_sd.c **** /* USER CODE END BeforeReadDMABlocksSection */
+ 160:Src/bsp_driver_sd.c **** /**
+ 161:Src/bsp_driver_sd.c ****   * @brief  Reads block(s) from a specified address in an SD card, in DMA mode.
+ 162:Src/bsp_driver_sd.c ****   * @param  pData: Pointer to the buffer that will contain the data to transmit
+ 163:Src/bsp_driver_sd.c ****   * @param  ReadAddr: Address from where data is to be read
+ 164:Src/bsp_driver_sd.c ****   * @param  NumOfBlocks: Number of SD blocks to read 
+ 165:Src/bsp_driver_sd.c ****   * @retval SD status
+ 166:Src/bsp_driver_sd.c ****   */
+ 167:Src/bsp_driver_sd.c **** uint8_t BSP_SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks)
+ 168:Src/bsp_driver_sd.c **** {
+ 169:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+ 170:Src/bsp_driver_sd.c ****   
+ 171:Src/bsp_driver_sd.c ****   /* Read block(s) in DMA transfer mode */
+ 172:Src/bsp_driver_sd.c ****   if (HAL_SD_ReadBlocks_DMA(&hsd1, (uint8_t *)pData, ReadAddr, NumOfBlocks) != HAL_OK)
+ 173:Src/bsp_driver_sd.c ****   {
+ 174:Src/bsp_driver_sd.c ****     sd_state = MSD_ERROR;
+ 175:Src/bsp_driver_sd.c ****   }
+ 176:Src/bsp_driver_sd.c ****   
+ 177:Src/bsp_driver_sd.c ****   return sd_state; 
+ 178:Src/bsp_driver_sd.c **** }
+ 179:Src/bsp_driver_sd.c **** 
+ 180:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeWriteDMABlocksSection */
+ 181:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 182:Src/bsp_driver_sd.c **** /* USER CODE END BeforeWriteDMABlocksSection */
+ 183:Src/bsp_driver_sd.c **** /**
+ 184:Src/bsp_driver_sd.c ****   * @brief  Writes block(s) to a specified address in an SD card, in DMA mode.
+ 185:Src/bsp_driver_sd.c ****   * @param  pData: Pointer to the buffer that will contain the data to transmit
+ 186:Src/bsp_driver_sd.c ****   * @param  WriteAddr: Address from where data is to be written
+ 187:Src/bsp_driver_sd.c ****   * @param  NumOfBlocks: Number of SD blocks to write 
+ 188:Src/bsp_driver_sd.c ****   * @retval SD status
+ 189:Src/bsp_driver_sd.c ****   */
+ 190:Src/bsp_driver_sd.c **** uint8_t BSP_SD_WriteBlocks_DMA(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks)
+ 191:Src/bsp_driver_sd.c **** {
+ 192:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+ 193:Src/bsp_driver_sd.c ****   
+ 194:Src/bsp_driver_sd.c ****   /* Write block(s) in DMA transfer mode */
+ 195:Src/bsp_driver_sd.c ****   if (HAL_SD_WriteBlocks_DMA(&hsd1, (uint8_t *)pData, WriteAddr, NumOfBlocks) != HAL_OK)
+ 196:Src/bsp_driver_sd.c ****   {
+ 197:Src/bsp_driver_sd.c ****     sd_state = MSD_ERROR;
+ 198:Src/bsp_driver_sd.c ****   }
+ 199:Src/bsp_driver_sd.c ****   
+ 200:Src/bsp_driver_sd.c ****   return sd_state; 
+ 201:Src/bsp_driver_sd.c **** }
+ 202:Src/bsp_driver_sd.c **** 
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 5
+
+
+ 203:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeEraseSection */
+ 204:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 205:Src/bsp_driver_sd.c **** /* USER CODE END BeforeEraseSection */
+ 206:Src/bsp_driver_sd.c **** /**
+ 207:Src/bsp_driver_sd.c ****   * @brief  Erases the specified memory area of the given SD card. 
+ 208:Src/bsp_driver_sd.c ****   * @param  StartAddr: Start byte address
+ 209:Src/bsp_driver_sd.c ****   * @param  EndAddr: End byte address
+ 210:Src/bsp_driver_sd.c ****   * @retval SD status
+ 211:Src/bsp_driver_sd.c ****   */
+ 212:Src/bsp_driver_sd.c **** uint8_t BSP_SD_Erase(uint32_t StartAddr, uint32_t EndAddr)
+ 213:Src/bsp_driver_sd.c **** {
+ 214:Src/bsp_driver_sd.c ****   uint8_t sd_state = MSD_OK;
+ 215:Src/bsp_driver_sd.c **** 
+ 216:Src/bsp_driver_sd.c ****   if (HAL_SD_Erase(&hsd1, StartAddr, EndAddr) != HAL_OK)  
+ 217:Src/bsp_driver_sd.c ****   {
+ 218:Src/bsp_driver_sd.c ****     sd_state = MSD_ERROR;
+ 219:Src/bsp_driver_sd.c ****   }
+ 220:Src/bsp_driver_sd.c **** 
+ 221:Src/bsp_driver_sd.c ****   return sd_state; 
+ 222:Src/bsp_driver_sd.c **** }
+ 223:Src/bsp_driver_sd.c **** 
+ 224:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeGetCardStateSection */
+ 225:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 226:Src/bsp_driver_sd.c **** /* USER CODE END BeforeGetCardStateSection */
+ 227:Src/bsp_driver_sd.c **** /**
+ 228:Src/bsp_driver_sd.c ****   * @brief  Gets the current SD card data status.
+ 229:Src/bsp_driver_sd.c ****   * @param  None
+ 230:Src/bsp_driver_sd.c ****   * @retval Data transfer state.
+ 231:Src/bsp_driver_sd.c ****   *          This value can be one of the following values:
+ 232:Src/bsp_driver_sd.c ****   *            @arg  SD_TRANSFER_OK: No data transfer is acting
+ 233:Src/bsp_driver_sd.c ****   *            @arg  SD_TRANSFER_BUSY: Data transfer is acting
+ 234:Src/bsp_driver_sd.c ****   */
+ 235:Src/bsp_driver_sd.c **** uint8_t BSP_SD_GetCardState(void)
+ 236:Src/bsp_driver_sd.c **** {
+ 237:Src/bsp_driver_sd.c ****   return ((HAL_SD_GetCardState(&hsd1) == HAL_SD_CARD_TRANSFER ) ? SD_TRANSFER_OK : SD_TRANSFER_BUSY
+ 238:Src/bsp_driver_sd.c **** }
+ 239:Src/bsp_driver_sd.c **** 
+ 240:Src/bsp_driver_sd.c **** /**
+ 241:Src/bsp_driver_sd.c ****   * @brief  Get SD information about specific SD card.
+ 242:Src/bsp_driver_sd.c ****   * @param  CardInfo: Pointer to HAL_SD_CardInfoTypedef structure
+ 243:Src/bsp_driver_sd.c ****   * @retval None 
+ 244:Src/bsp_driver_sd.c ****   */
+ 245:Src/bsp_driver_sd.c **** void BSP_SD_GetCardInfo(HAL_SD_CardInfoTypeDef *CardInfo)
+ 246:Src/bsp_driver_sd.c **** {
+ 247:Src/bsp_driver_sd.c ****   /* Get SD card Information */
+ 248:Src/bsp_driver_sd.c ****   HAL_SD_GetCardInfo(&hsd1, CardInfo);
+ 249:Src/bsp_driver_sd.c **** }
+ 250:Src/bsp_driver_sd.c **** 
+ 251:Src/bsp_driver_sd.c **** /* USER CODE BEGIN BeforeCallBacksSection */
+ 252:Src/bsp_driver_sd.c **** /* can be used to modify previous code / undefine following code / add code */
+ 253:Src/bsp_driver_sd.c **** /* USER CODE END BeforeCallBacksSection */
+ 254:Src/bsp_driver_sd.c **** /**
+ 255:Src/bsp_driver_sd.c ****   * @brief SD Abort callbacks
+ 256:Src/bsp_driver_sd.c ****   * @param hsd: SD handle
+ 257:Src/bsp_driver_sd.c ****   * @retval None
+ 258:Src/bsp_driver_sd.c ****   */
+ 259:Src/bsp_driver_sd.c **** void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd)
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 6
+
+
+ 260:Src/bsp_driver_sd.c **** {
+ 261:Src/bsp_driver_sd.c ****   BSP_SD_AbortCallback();
+ 262:Src/bsp_driver_sd.c **** }
+ 263:Src/bsp_driver_sd.c **** 
+ 264:Src/bsp_driver_sd.c **** /**
+ 265:Src/bsp_driver_sd.c ****   * @brief Tx Transfer completed callback
+ 266:Src/bsp_driver_sd.c ****   * @param hsd: SD handle
+ 267:Src/bsp_driver_sd.c ****   * @retval None
+ 268:Src/bsp_driver_sd.c ****   */
+ 269:Src/bsp_driver_sd.c **** void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd)
+ 270:Src/bsp_driver_sd.c **** {
+ 271:Src/bsp_driver_sd.c ****   BSP_SD_WriteCpltCallback();
+ 272:Src/bsp_driver_sd.c **** }
+ 273:Src/bsp_driver_sd.c **** 
+ 274:Src/bsp_driver_sd.c **** /**
+ 275:Src/bsp_driver_sd.c ****   * @brief Rx Transfer completed callback
+ 276:Src/bsp_driver_sd.c ****   * @param hsd: SD handle
+ 277:Src/bsp_driver_sd.c ****   * @retval None
+ 278:Src/bsp_driver_sd.c ****   */
+ 279:Src/bsp_driver_sd.c **** void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd)
+ 280:Src/bsp_driver_sd.c **** {
+ 281:Src/bsp_driver_sd.c ****   BSP_SD_ReadCpltCallback();
+ 282:Src/bsp_driver_sd.c **** }
+ 283:Src/bsp_driver_sd.c **** 
+ 284:Src/bsp_driver_sd.c **** /* USER CODE BEGIN CallBacksSection_C */
+ 285:Src/bsp_driver_sd.c **** /**
+ 286:Src/bsp_driver_sd.c ****   * @brief BSP SD Abort callback
+ 287:Src/bsp_driver_sd.c ****   * @retval None
+ 288:Src/bsp_driver_sd.c ****   */
+ 289:Src/bsp_driver_sd.c **** __weak void BSP_SD_AbortCallback(void)
+ 290:Src/bsp_driver_sd.c **** {
+ 291:Src/bsp_driver_sd.c **** 
+ 292:Src/bsp_driver_sd.c **** }
+ 293:Src/bsp_driver_sd.c **** 
+ 294:Src/bsp_driver_sd.c **** /**
+ 295:Src/bsp_driver_sd.c ****   * @brief BSP Tx Transfer completed callback
+ 296:Src/bsp_driver_sd.c ****   * @retval None
+ 297:Src/bsp_driver_sd.c ****   */
+ 298:Src/bsp_driver_sd.c **** __weak void BSP_SD_WriteCpltCallback(void)
+ 299:Src/bsp_driver_sd.c **** {
+ 300:Src/bsp_driver_sd.c **** 
+ 301:Src/bsp_driver_sd.c **** }
+ 302:Src/bsp_driver_sd.c **** 
+ 303:Src/bsp_driver_sd.c **** /**
+ 304:Src/bsp_driver_sd.c ****   * @brief BSP Rx Transfer completed callback
+ 305:Src/bsp_driver_sd.c ****   * @retval None
+ 306:Src/bsp_driver_sd.c ****   */
+ 307:Src/bsp_driver_sd.c **** __weak void BSP_SD_ReadCpltCallback(void)
+ 308:Src/bsp_driver_sd.c **** {
+ 309:Src/bsp_driver_sd.c **** 
+ 310:Src/bsp_driver_sd.c **** }
+ 311:Src/bsp_driver_sd.c **** 
+ 312:Src/bsp_driver_sd.c **** #endif
+ 313:Src/bsp_driver_sd.c **** 
+ 314:Src/bsp_driver_sd.c **** /* USER CODE END CallBacksSection_C */
+ 315:Src/bsp_driver_sd.c **** #endif
+ 316:Src/bsp_driver_sd.c **** 
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 7
+
+
+ 317:Src/bsp_driver_sd.c **** /**
+ 318:Src/bsp_driver_sd.c ****  * @brief  Detects if SD card is correctly plugged in the memory slot or not.
+ 319:Src/bsp_driver_sd.c ****  * @param  None
+ 320:Src/bsp_driver_sd.c ****  * @retval Returns if SD is detected or not
+ 321:Src/bsp_driver_sd.c ****  */
+ 322:Src/bsp_driver_sd.c **** uint8_t BSP_SD_IsDetected(void)
+ 323:Src/bsp_driver_sd.c **** {
+  28              		.loc 1 323 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 8
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 00B5     		push	{lr}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 14, -4
+  36 0002 83B0     		sub	sp, sp, #12
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 16
+ 324:Src/bsp_driver_sd.c ****   __IO uint8_t status = SD_PRESENT;
+  39              		.loc 1 324 0
+  40 0004 0123     		movs	r3, #1
+  41 0006 8DF80730 		strb	r3, [sp, #7]
+ 325:Src/bsp_driver_sd.c **** 
+ 326:Src/bsp_driver_sd.c ****   if (BSP_PlatformIsDetected() == 0x0) 
+  42              		.loc 1 326 0
+  43 000a FFF7FEFF 		bl	BSP_PlatformIsDetected
+  44              	.LVL0:
+  45 000e 10B9     		cbnz	r0, .L2
+ 327:Src/bsp_driver_sd.c ****   {
+ 328:Src/bsp_driver_sd.c ****     status = SD_NOT_PRESENT;
+  46              		.loc 1 328 0
+  47 0010 0023     		movs	r3, #0
+  48 0012 8DF80730 		strb	r3, [sp, #7]
+  49              	.L2:
+ 329:Src/bsp_driver_sd.c ****   }
+ 330:Src/bsp_driver_sd.c **** 
+ 331:Src/bsp_driver_sd.c ****   return status;
+  50              		.loc 1 331 0
+  51 0016 9DF80700 		ldrb	r0, [sp, #7]	@ zero_extendqisi2
+ 332:Src/bsp_driver_sd.c **** }
+  52              		.loc 1 332 0
+  53 001a 03B0     		add	sp, sp, #12
+  54              	.LCFI2:
+  55              		.cfi_def_cfa_offset 4
+  56              		@ sp needed
+  57 001c 5DF804FB 		ldr	pc, [sp], #4
+  58              		.cfi_endproc
+  59              	.LFE136:
+  61              		.text
+  62              	.Letext0:
+  63              		.file 2 "c:\\gcc_toolchain\\6_2017-q1-update\\arm-none-eabi\\include\\machine\\_default_types.h"
+  64              		.file 3 "c:\\gcc_toolchain\\6_2017-q1-update\\arm-none-eabi\\include\\sys\\_stdint.h"
+  65              		.file 4 "Drivers/CMSIS/Include/core_cm7.h"
+  66              		.file 5 "Drivers/CMSIS/Device/ST/STM32F7xx/Include/system_stm32f7xx.h"
+  67              		.file 6 "Drivers/CMSIS/Device/ST/STM32F7xx/Include/stm32f746xx.h"
+  68              		.file 7 "c:\\gcc_toolchain\\6_2017-q1-update\\arm-none-eabi\\include\\sys\\lock.h"
+  69              		.file 8 "c:\\gcc_toolchain\\6_2017-q1-update\\arm-none-eabi\\include\\sys\\_types.h"
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 8
+
+
+  70              		.file 9 "c:\\gcc_toolchain\\6_2017-q1-update\\lib\\gcc\\arm-none-eabi\\6.3.1\\include\\stddef.h"
+  71              		.file 10 "c:\\gcc_toolchain\\6_2017-q1-update\\arm-none-eabi\\include\\sys\\reent.h"
+  72              		.file 11 "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_def.h"
+  73              		.file 12 "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_dma.h"
+  74              		.file 13 "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_sdmmc.h"
+  75              		.file 14 "Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_sd.h"
+  76              		.file 15 "Inc/fatfs_platform.h"
+ARM GAS  C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s 			page 9
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 bsp_driver_sd.c
+C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s:18     .text.BSP_SD_IsDetected:00000000 $t
+C:\Users\MICHA~1\AppData\Local\Temp\ccmSaFdy.s:25     .text.BSP_SD_IsDetected:00000000 BSP_SD_IsDetected
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+BSP_PlatformIsDetected
