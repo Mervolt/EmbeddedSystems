@@ -1,5 +1,7 @@
-#ifndef __MP3AUDIO_H
-#define __MP3AUDIO_H
+#ifndef MP3H
+#define MP3H
+
+#define TEST_FILE "example.mp3.mp3"
 
 #include "stm32746g_discovery_ts.h"
 #include "term_io.h"
@@ -11,7 +13,7 @@
 #include "usb_host.h"
 #include "wm8994/wm8994.h"
 #include "stm32f7xx_hal.h"
-#include "screen_refresh.h"
+#include "gui.h"
 
 /* buffer sizes */
 #define FILE_BUFFER_SIZE 8192
@@ -54,10 +56,11 @@ enum
 };
 
 /* MP3 API functions */
-int init_mp3();
+int mp3_init();
 int read_directory();
 void play_directory();
 int next_file();
 int prev_file();
+int start_reading_file();
 
 #endif

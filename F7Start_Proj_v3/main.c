@@ -69,6 +69,8 @@
 #include "dbgu.h"
 #include "ansi.h"
 
+#include "gui.h"
+#include "mp3.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -215,155 +217,8 @@ char inkey(void)
     return 0;
 }
 
-//partially based on available code examples
-static void lcd_start(void)
-{
-  /* LCD Initialization */ 
-  BSP_LCD_Init();
-
-  /* LCD Initialization */ 
-  BSP_LCD_LayerDefaultInit(0, (unsigned int)lcd_image_bg);
-  //BSP_LCD_LayerDefaultInit(1, (unsigned int)lcd_image_bg+(LCD_X_SIZE*LCD_Y_SIZE*4));
-  BSP_LCD_LayerDefaultInit(1, (unsigned int)lcd_image_fg);
-
-  /* Enable the LCD */ 
-  BSP_LCD_DisplayOn(); 
-  
-  /* Select the LCD Background Layer  */
-  BSP_LCD_SelectLayer(0);
-
-  /* Clear the Background Layer */ 
-  BSP_LCD_Clear(LCD_COLOR_GREEN);
-  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-  
-  BSP_LCD_SetColorKeying(1,LCD_COLOR_WHITE);
-  
-  /* Select the LCD Foreground Layer  */
-  BSP_LCD_SelectLayer(1);
-
-  /* Clear the Foreground Layer */ 
-  BSP_LCD_Clear(LCD_COLOR_WHITE);
-  BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-  
-  /* Configure the transparency for foreground and background :
-     Increase the transparency */
-  BSP_LCD_SetTransparency(0, 255);
-  BSP_LCD_SetTransparency(1, 255);
-}
-
-//[rmv]
-
-void draw_fill_bar(float part){
-
-	BSP_LCD_SelectLayer(0);
-	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-	
-	BSP_LCD_FillRect(0,0.35*LCD_Y_SIZE +1 ,part *LCD_X_SIZE +1 ,0.2*LCD_Y_SIZE -1);
-
-}
-void draw_background(void)
-{
-  /* Select the LCD Background Layer  */
-  BSP_LCD_SelectLayer(0);
-  BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
-  //BSP_LCD_FillRect(0.4*LCD_X_SIZE,0.2*LCD_Y_SIZE,150,130);
-  //pasek przewijania i obramowka dla tytulu
-  BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
-  BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE);
-  BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
-
-
-//ogolnie : gora 0,75, dol 0.83, srodek 0.79
-	//strzalka prev
-  int16_t num_of_points_left= 3;
-  pPoint pointsL =(pPoint) malloc( sizeof(Point) *num_of_points_left); 
-  pointsL[0].X=0.10*LCD_X_SIZE;//middle of arrow 
-  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  pointsL[1].X=0.16*LCD_X_SIZE;//top of arrow
-  pointsL[1].Y=0.70*LCD_Y_SIZE;
-  pointsL[2].X=0.16*LCD_X_SIZE;
-  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
-  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
-  
-   
-  pointsL[0].X=0.15*LCD_X_SIZE;//middle of arrow 
-  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  pointsL[1].X=0.21*LCD_X_SIZE;//top of arrow
-  pointsL[1].Y=0.70*LCD_Y_SIZE;
-  pointsL[2].X=0.21*LCD_X_SIZE;
-  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
-  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
-
-  
-
-  //kwadrat stopu
-  //BSP_LCD_FillRect(0.34*LCD_X_SIZE,0.75*LCD_Y_SIZE,0.06*LCD_X_SIZE,0.08*LCD_Y_SIZE);// szer 0.06 ;od 0.31 do 0.37
-  BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);// szer 0.06 ;od 0.31 do 0.37
-  
-  
-  //trojkat play
-  int16_t num_of_points_triangle= 3;
-  pPoint pointsT =(pPoint) malloc( sizeof(Point) *num_of_points_triangle); 
-  pointsT[0].X=0.45*LCD_X_SIZE; //top of triangle
-  pointsT[0].Y=0.70*LCD_Y_SIZE;
-  pointsT[1].X=0.45*LCD_X_SIZE; //bottom of triangle
-  pointsT[1].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;
-  pointsT[2].X=0.55*LCD_X_SIZE;//mid of triangle
-  pointsT[2].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  BSP_LCD_FillPolygon(pointsT, num_of_points_triangle);//szer 0.06 ; od 0.49 do do 0.55
-  
-  
-  //pause
-  BSP_LCD_FillRect(0.63*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
-  
-  BSP_LCD_FillRect(0.68*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
-
-  
-  //strzalka next
-  pointsL[0].X=0.85*LCD_X_SIZE;//middle of arrow 
-  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  pointsL[1].X=0.79*LCD_X_SIZE;//top of arrow
-  pointsL[1].Y=0.70*LCD_Y_SIZE;
-  pointsL[2].X=0.79*LCD_X_SIZE;
-  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
-  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
-  
-   
-  pointsL[0].X=0.9*LCD_X_SIZE;//middle of arrow 
-  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  pointsL[1].X=0.84*LCD_X_SIZE;//top of arrow
-  pointsL[1].Y=0.70*LCD_Y_SIZE;
-  pointsL[2].X=0.84*LCD_X_SIZE;
-  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
-  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
-  
-  //draw_fill_bar(0.15);
-  
-	float i =0;
-	while(i<1){
-		
-		xprintf("%f",i);
-		draw_fill_bar(i);
-		//vTaskDelay(100);
-		
-		i+=0.01;
-	}
-  
-  
-  //select Foreground Layer
-  BSP_LCD_SelectLayer(1);
-}
-
 static TS_StateTypeDef  TS_State;
 
-
-int initialize_touchscreen(void)
-{
-  uint8_t  status = 0;
-  status = BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
-  if(status != TS_OK) return -1;
-  return 0;
-}
 
 
 
@@ -428,9 +283,9 @@ int main(void)
 
   printf("Regular printf\n");
 
-lcd_start();
-draw_background();
-initialize_touchscreen();
+  //lcd_start();
+  //draw_background();
+  initialize_touchscreen();
 
   /* USER CODE END 2 */
 
@@ -1685,14 +1540,9 @@ static void http_server_netconn_thread(void const *arg)
 #endif //ENABLE_NETWORK
 
 #define AUDIO_OUT_BUFFER_SIZE                      8192
-enum {
-  BUFFER_OFFSET_NONE = 0,  
-  BUFFER_OFFSET_HALF,  
-  BUFFER_OFFSET_FULL,     
-};
+
 
 uint8_t buff[AUDIO_OUT_BUFFER_SIZE];
-static FIL file;
 extern ApplicationTypeDef Appli_state;
 static uint8_t player_state = 0;
 static uint8_t buf_offs = BUFFER_OFFSET_NONE;
@@ -1701,12 +1551,12 @@ static uint32_t fpos = 0;
 
 void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
 {
-    buf_offs = BUFFER_OFFSET_FULL;
+    dma_buff_offs = BUFFER_OFFSET_FULL;
 }
 
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
 { 
-    buf_offs = BUFFER_OFFSET_HALF;
+    dma_buff_offs = BUFFER_OFFSET_HALF;
 }
 
 
@@ -1754,17 +1604,28 @@ void StartDefaultTask(void const * argument)
   }while(Appli_state != APPLICATION_READY);
     
   xprintf("initializing audio codec...\n");
-  if(BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE1, 60, AUDIO_FREQUENCY_44K) == 0)
-  {
-	xprintf("audio init OK\n");
+
+  if(mp3_init() == 0){
+	  xprintf("audio init OK\n");
+  }else{
+	  xprintf("audio init ERROR\n");
   }
-  else
-  {
-	xprintf("audio init ERROR\n");
-  }
-  BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
   
-  /* Infinite loop */
+  /*
+  if (read_directory("1:/"))
+    {
+        while (1) {}
+    }
+
+  xprintf("Playlist initialized...\n");
+  xprintf("Player ready!\n");
+  */
+   while (1)
+    {
+        play_directory();
+    }
+
+  /* 
   for(;;)
   {
 
@@ -1793,7 +1654,7 @@ void StartDefaultTask(void const * argument)
       if(player_state) {xprintf("already playing\n"); break;}
 	  
       FRESULT res;
-      res = f_open(&file,"1:/mp3700kb.mp3",FA_READ);
+      res = f_open(&file,"1:/testwave.wav",FA_READ);
       if(res==FR_OK)
       {
         xprintf("mp3 file open OK\n");
@@ -1862,8 +1723,9 @@ void StartDefaultTask(void const * argument)
 
 
   vTaskDelay(1);
-
-  }
+   
+  }  
+  */
   /* USER CODE END 5 */ 
 }
 

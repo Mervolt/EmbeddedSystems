@@ -36,6 +36,23 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Drivers/Helix/mp3dec.c \
+Drivers/Helix/real/buffers.c \
+Drivers/Helix/real/bitstream.c \
+Drivers/Helix/mp3tabs.c \
+Drivers/Helix/real/scalfact.c \
+Drivers/Helix/real/huffman.c \
+Drivers/Helix/real/hufftabs.c \
+Drivers/Helix/real/dqchan.c \
+Drivers/Helix/real/dequant.c \
+Drivers/Helix/real/imdct.c \
+Drivers/Helix/real/subband.c \
+Drivers/Helix/real/dct32.c \
+Drivers/Helix/real/polyphase.c \
+Drivers/Helix/real/trigtabs.c \
+Drivers/Helix/real/stproc.c \
+Src/gui.c \
+Src/mp3.c \
 main.c \
 Src/bsp_driver_sd.c \
 Src/sd_diskio.c \
@@ -284,8 +301,8 @@ C_INCLUDES =  \
 -IMiddlewares/Third_Party/LwIP/src/include/posix \
 -IMiddlewares/Third_Party/LwIP/src/include/posix/sys \
 -IMiddlewares/Third_Party/LwIP/system/arch \
--IDrivers/CMSIS/Include
-
+-IDrivers/CMSIS/Include \
+-IDrivers/Helix \
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
