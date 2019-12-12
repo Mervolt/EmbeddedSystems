@@ -1,7 +1,7 @@
 # Prerequisites
 *.d
 
-F7Start_Proj_v3\build
+
 # Object files
 *.o
 *.ko

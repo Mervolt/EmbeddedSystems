@@ -49,14 +49,17 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
 #include "lwip.h"
 #include "usb_host.h"
+#include <unistd.h>
+// #include "mp3_audio_player.h"
 
 /* USER CODE BEGIN Includes */
 #include  <errno.h>
-//#include  <sys/unistd.h>
+#include  <sys/unistd.h>
 
 #include "stm32746g_discovery_lcd.h"
 #include "Utilities/Fonts/fonts.h"
@@ -66,7 +69,7 @@
 #include "dbgu.h"
 #include "ansi.h"
 
-//#include "FreeRTOS.h"
+#include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 
@@ -163,12 +166,10 @@ static void MX_TIM7_Init(void);
 void StartDefaultTask(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+                              
                                 
                                 
-                                
-                                
-
-/* USER CODE BEGIN PFP */
+/* USER CODE BEGIN PFPs */
 /* Private function prototypes -----------------------------------------------*/
 
 /* USER CODE END PFP */
@@ -232,7 +233,7 @@ static void lcd_start(void)
   BSP_LCD_SelectLayer(0);
 
   /* Clear the Background Layer */ 
-  BSP_LCD_Clear(LCD_COLOR_WHITE);
+  BSP_LCD_Clear(LCD_COLOR_GREEN);
   BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
   
   BSP_LCD_SetColorKeying(1,LCD_COLOR_WHITE);
@@ -251,12 +252,103 @@ static void lcd_start(void)
 }
 
 //[rmv]
+
+void draw_fill_bar(float part){
+
+	BSP_LCD_SelectLayer(0);
+	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+	
+	BSP_LCD_FillRect(0,0.35*LCD_Y_SIZE +1 ,part *LCD_X_SIZE +1 ,0.2*LCD_Y_SIZE -1);
+
+}
 void draw_background(void)
 {
   /* Select the LCD Background Layer  */
   BSP_LCD_SelectLayer(0);
-  BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-  BSP_LCD_FillRect(0.4*LCD_X_SIZE,0.2*LCD_Y_SIZE,150,130);
+  BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+  //BSP_LCD_FillRect(0.4*LCD_X_SIZE,0.2*LCD_Y_SIZE,150,130);
+  //pasek przewijania i obramowka dla tytulu
+  BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+  BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
+
+
+//ogolnie : gora 0,75, dol 0.83, srodek 0.79
+	//strzalka prev
+  int16_t num_of_points_left= 3;
+  pPoint pointsL =(pPoint) malloc( sizeof(Point) *num_of_points_left); 
+  pointsL[0].X=0.10*LCD_X_SIZE;//middle of arrow 
+  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
+  pointsL[1].X=0.16*LCD_X_SIZE;//top of arrow
+  pointsL[1].Y=0.70*LCD_Y_SIZE;
+  pointsL[2].X=0.16*LCD_X_SIZE;
+  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
+  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
+  
+   
+  pointsL[0].X=0.15*LCD_X_SIZE;//middle of arrow 
+  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
+  pointsL[1].X=0.21*LCD_X_SIZE;//top of arrow
+  pointsL[1].Y=0.70*LCD_Y_SIZE;
+  pointsL[2].X=0.21*LCD_X_SIZE;
+  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
+  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
+
+  
+
+  //kwadrat stopu
+  //BSP_LCD_FillRect(0.34*LCD_X_SIZE,0.75*LCD_Y_SIZE,0.06*LCD_X_SIZE,0.08*LCD_Y_SIZE);// szer 0.06 ;od 0.31 do 0.37
+  BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);// szer 0.06 ;od 0.31 do 0.37
+  
+  
+  //trojkat play
+  int16_t num_of_points_triangle= 3;
+  pPoint pointsT =(pPoint) malloc( sizeof(Point) *num_of_points_triangle); 
+  pointsT[0].X=0.45*LCD_X_SIZE; //top of triangle
+  pointsT[0].Y=0.70*LCD_Y_SIZE;
+  pointsT[1].X=0.45*LCD_X_SIZE; //bottom of triangle
+  pointsT[1].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;
+  pointsT[2].X=0.55*LCD_X_SIZE;//mid of triangle
+  pointsT[2].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
+  BSP_LCD_FillPolygon(pointsT, num_of_points_triangle);//szer 0.06 ; od 0.49 do do 0.55
+  
+  
+  //pause
+  BSP_LCD_FillRect(0.63*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
+  
+  BSP_LCD_FillRect(0.68*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
+
+  
+  //strzalka next
+  pointsL[0].X=0.85*LCD_X_SIZE;//middle of arrow 
+  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
+  pointsL[1].X=0.79*LCD_X_SIZE;//top of arrow
+  pointsL[1].Y=0.70*LCD_Y_SIZE;
+  pointsL[2].X=0.79*LCD_X_SIZE;
+  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
+  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
+  
+   
+  pointsL[0].X=0.9*LCD_X_SIZE;//middle of arrow 
+  pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
+  pointsL[1].X=0.84*LCD_X_SIZE;//top of arrow
+  pointsL[1].Y=0.70*LCD_Y_SIZE;
+  pointsL[2].X=0.84*LCD_X_SIZE;
+  pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
+  BSP_LCD_FillPolygon(pointsL, num_of_points_left);
+  
+  //draw_fill_bar(0.15);
+  
+	float i =0;
+	while(i<1){
+		
+		xprintf("%f",i);
+		draw_fill_bar(i);
+		//vTaskDelay(100);
+		
+		i+=0.01;
+	}
+  
   
   //select Foreground Layer
   BSP_LCD_SelectLayer(1);
@@ -1701,14 +1793,14 @@ void StartDefaultTask(void const * argument)
       if(player_state) {xprintf("already playing\n"); break;}
 	  
       FRESULT res;
-      res = f_open(&file,"1:/testwave.wav",FA_READ);
+      res = f_open(&file,"1:/mp3700kb.mp3",FA_READ);
       if(res==FR_OK)
       {
-        xprintf("wave file open OK\n");
+        xprintf("mp3 file open OK\n");
       }
       else
       {
-        xprintf("wave file open ERROR, res = %d\n",res);
+        xprintf(", file open ERROR, res = %d\n",res);
       }
       player_state = 1;
       BSP_AUDIO_OUT_Play((uint16_t*)&buff[0],AUDIO_OUT_BUFFER_SIZE);
