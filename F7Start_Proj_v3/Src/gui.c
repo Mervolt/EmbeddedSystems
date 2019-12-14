@@ -1,5 +1,64 @@
 #include "gui.h"
 
+int is_button_y_axis(){
+    return (TS_State.touchY[0] > 0.7 * LCD_Y_SIZE) && (TS_State.touchY[0] < 0.7 * LCD_Y_SIZE + 0.1 * LCD_X_SIZE);
+}
+
+int is_play_button_x_axis(){
+    return (TS_State.touchX[0] > 0.45*LCD_X_SIZE) && (TS_State.touchX[0] < 0.55*LCD_X_SIZE);
+}
+
+int is_stop_button_x_axis(){
+    return (TS_State.touchX[0] > 0.28*LCD_X_SIZE) && (TS_State.touchX[0] < 0.38*LCD_X_SIZE);
+}
+
+int is_pause_button_x_axis(){
+    return (TS_State.touchX[0] > 0.63*LCD_X_SIZE) && (TS_State.touchX[0] < 0.73*LCD_X_SIZE);
+}
+
+int is_nextsong_button_x_axis(){
+    return (TS_State.touchX[0] > 0.79*LCD_X_SIZE) && (TS_State.touchX[0] < 0.90*LCD_X_SIZE);
+}
+
+int is_prevsong_button_x_axis(){
+    return (TS_State.touchX[0] > 0.10*LCD_X_SIZE) && (TS_State.touchX[0] < 0.21*LCD_X_SIZE);
+}
+
+
+void startResponsiveGUItask(void *argument){
+  lcd_start();
+  initialize_touchscreen();
+  draw_background();
+  while(1){
+    if (BSP_TS_GetState(&TS_State) != TS_OK){
+        while (1) {}
+    }
+    if (TS_State.touchDetected){
+
+        if(is_button_y_axis()){
+            if(is_play_button_x_axis()){
+                //TODO
+            }
+            if(is_stop_button_x_axis()){
+                reset_playing = RESET_PLAYING;
+            }
+            if(is_pause_button_x_axis()){
+                //TODO
+            }
+            if(is_nextsong_button_x_axis()){
+                CURRENT_FILE = next_file();
+                reset_playing = RESET_PLAYING;
+            }
+            if(is_prevsong_button_x_axis()){
+                CURRENT_FILE = prev_file();
+                reset_playing = RESET_PLAYING;
+            }
+        }
+    }
+    vTaskDelay(200);
+  }
+}
+
 int lcd_start(void){
     /* LCD Initialization */
     if (BSP_LCD_Init() != LCD_OK)
@@ -58,7 +117,6 @@ void draw_background(void){
   BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
 
 
-//ogolnie : gora 0,75, dol 0.83, srodek 0.79
 	//strzalka prev
   int16_t num_of_points_left= 3;
   pPoint pointsL =(pPoint) malloc( sizeof(Point) *num_of_points_left); 
@@ -82,7 +140,7 @@ void draw_background(void){
   
 
   //kwadrat stopu
-  BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);// szer 0.06 ;od 0.31 do 0.37
+  BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);
   
   
   //trojkat play

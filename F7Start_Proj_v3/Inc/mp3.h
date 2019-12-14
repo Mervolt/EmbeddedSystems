@@ -55,6 +55,19 @@ enum
   BUFFER_OFFSET_FULL,
 };
 
+typedef enum{
+  RESET_PLAYING,
+  CONTINUE_PLAYING,
+}reset_play;
+
+typedef enum{
+  PAUSE_PLAYING,
+  STILL_PLAYING,
+}pause_play;
+
+volatile reset_play reset_playing;
+volatile pause_play pause_playing;
+
 /* MP3 API functions */
 int mp3_init();
 int read_directory();

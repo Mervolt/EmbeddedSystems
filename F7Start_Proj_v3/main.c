@@ -217,9 +217,6 @@ char inkey(void)
     return 0;
 }
 
-static TS_StateTypeDef  TS_State;
-
-
 
 
 /* USER CODE END 0 */
@@ -1589,10 +1586,10 @@ void StartDefaultTask(void const * argument)
   vTaskDelay(1000);
   
   /*Graphical User Interface*/
-  lcd_start();
-  draw_background();
-  initialize_touchscreen();
-  
+    if(xTaskCreate(&startResponsiveGUItask, NULL, configMINIMAL_STACK_SIZE, NULL, 2, NULL) != pdPASS){
+      while(1){}
+    }
+
   xprintf("waiting for USB mass storage\n");
   
   do{
@@ -1615,7 +1612,7 @@ void StartDefaultTask(void const * argument)
 
   xprintf("Playlist initialized...\n");
   xprintf("Player ready!\n");
-  while (1){
+  while(1){
     play_directory();
   }
 

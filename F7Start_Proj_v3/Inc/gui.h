@@ -13,8 +13,7 @@
 #include "usb_host.h"
 #include "stm32f7xx_hal.h"
 #include "mp3.h"
-
-
+TS_StateTypeDef TS_State;
 
 /* color constants */
 #define BG_COLOR ((uint32_t)0xFF241593)
@@ -59,6 +58,13 @@ void draw_background();
 void draw_fill_bar(float part);
 int initialize_touchscreen();
 int lcd_start();
+void startResponsiveGUItask(void *argument);
+int is_button_y_axis();
+int is_play_button_x_axis();
+int is_stop_button_x_axis();
+int is_pause_button_x_axis();
+int is_prevsong_button_x_axis();
+int is_nextsong_button_x_axis();
 //void start_touch_task(void *argument);
 
 /* player state enum */
