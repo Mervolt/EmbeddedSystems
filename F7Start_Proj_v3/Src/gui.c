@@ -18,7 +18,7 @@ int lcd_start(void){
     BSP_LCD_SelectLayer(0);
 
     /* Clear the Background Layer */
-    BSP_LCD_Clear(LCD_COLOR_WHITE);
+    BSP_LCD_Clear(LCD_COLOR_GREEN);
     BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
 
     BSP_LCD_SetColorKeying(1, LCD_COLOR_WHITE);
@@ -53,8 +53,6 @@ void draw_background(void){
   /* Select the LCD Background Layer  */
   BSP_LCD_SelectLayer(0);
   BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
-  //BSP_LCD_FillRect(0.4*LCD_X_SIZE,0.2*LCD_Y_SIZE,150,130);
-  //pasek przewijania i obramowka dla tytulu
   BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
   BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE);
   BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
@@ -84,7 +82,6 @@ void draw_background(void){
   
 
   //kwadrat stopu
-  //BSP_LCD_FillRect(0.34*LCD_X_SIZE,0.75*LCD_Y_SIZE,0.06*LCD_X_SIZE,0.08*LCD_Y_SIZE);// szer 0.06 ;od 0.31 do 0.37
   BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);// szer 0.06 ;od 0.31 do 0.37
   
   
@@ -126,15 +123,15 @@ void draw_background(void){
   
   //draw_fill_bar(0.15);
   
-	float i =0;
-	while(i<1){
+	// float i =0;
+	// while(i<1){
 		
-		xprintf("%f",i);
-		draw_fill_bar(i);
-		//vTaskDelay(100);
+	// 	xprintf("%f",i);
+	// 	draw_fill_bar(i);
+	// 	//vTaskDelay(100);
 		
-		i+=0.01;
-	}
+	// 	i+=0.01;
+	// }
   
   
   //select Foreground Layer

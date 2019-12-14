@@ -283,10 +283,6 @@ int main(void)
 
   printf("Regular printf\n");
 
-  //lcd_start();
-  //draw_background();
-  initialize_touchscreen();
-
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -1551,12 +1547,12 @@ static uint32_t fpos = 0;
 
 void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
 {
-    dma_buff_offs = BUFFER_OFFSET_FULL;
+    dma_audio_buffer_offs = BUFFER_OFFSET_FULL;
 }
 
 void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
 { 
-    dma_buff_offs = BUFFER_OFFSET_HALF;
+    dma_audio_buffer_offs = BUFFER_OFFSET_HALF;
 }
 
 
@@ -1592,13 +1588,14 @@ void StartDefaultTask(void const * argument)
   
   vTaskDelay(1000);
   
+  /*Graphical User Interface*/
   lcd_start();
   draw_background();
+  initialize_touchscreen();
   
   xprintf("waiting for USB mass storage\n");
   
-  do
-  {
+  do{
     xprintf(".");
     vTaskDelay(250);
   }while(Appli_state != APPLICATION_READY);
@@ -1611,19 +1608,19 @@ void StartDefaultTask(void const * argument)
 	  xprintf("audio init ERROR\n");
   }
   
-  /*
-  if (read_directory("1:/"))
-    {
-        while (1) {}
-    }
+  
+  if(read_directory("1:/")){
+    while (1) {}
+  }
 
   xprintf("Playlist initialized...\n");
   xprintf("Player ready!\n");
-  */
-   while (1)
-    {
-        play_directory();
-    }
+  while (1){
+    play_directory();
+  }
+
+
+
 
   /* 
   for(;;)

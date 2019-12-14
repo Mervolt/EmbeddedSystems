@@ -24,16 +24,16 @@
 #define FILE_NAME_LENGTH 100
 
 /* buffers */
-char file_buff[FILE_BUFFER_SIZE];
-short processing_buff[DMA_BUFFER_SIZE / 2];
-char dma_buff[DMA_BUFFER_SIZE];
+char file_data_buffer[FILE_BUFFER_SIZE];
+short intermediate_data_buffer[DMA_BUFFER_SIZE / 2];
+char dma_audio_buffer[DMA_BUFFER_SIZE];
 
 /* buffer pointers and offsets */
-char *file_buff_ptr;
-short *processing_buff_ptr;
-int processing_buff_offs;
-int bytes_left;
-uint8_t dma_buff_offs;
+char *file_data_buffer_ptr;
+short *intermediate_data_buffer_ptr;
+int intermediate_data_buffer_offs;
+int audio_bytes_amount;
+uint8_t dma_audio_buffer_offs;
 
 /* audio variables */
 uint8_t volume;

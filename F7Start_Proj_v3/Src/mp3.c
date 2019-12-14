@@ -6,7 +6,7 @@ int mp3_init()
 {
     //redraw_title = 0;
 
-    volume = 30;
+    volume = 70;
 
     if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE1,
                            volume,
@@ -88,52 +88,56 @@ int process_callback(int dma_offset)
 {
     int bytes_read, offset;
 
-    while (processing_buff_offs < DMA_BUFFER_SIZE / 4)
+    while (intermediate_data_buffer_offs < DMA_BUFFER_SIZE / 4)
     {
-        offset = MP3FindSyncWord((unsigned char *) file_buff_ptr, bytes_left);
+        /* count offset to skip frame header */
+        offset = MP3FindSyncWord((unsigned char *) file_data_buffer_ptr, audio_bytes_amount);
         if (offset == -1)
         {
-            bytes_left = 0;
+            audio_bytes_amount = 0;
             return 0;
         }
-        bytes_left -= offset;
-        file_buff_ptr += offset;
+        /* decrease audio bytes by offset */
+        audio_bytes_amount -= offset;
+        /* set pointer to real audio data */
+        file_data_buffer_ptr += offset;
         if (MP3Decode(hMP3Decoder,
-                      (unsigned char **) &file_buff_ptr,
-                      (int *) &bytes_left,
-                      processing_buff_ptr,
+                      (unsigned char **) &file_data_buffer_ptr,
+                      (int *) &audio_bytes_amount,
+                      intermediate_data_buffer_ptr,
                       0))
         {
             xprintf("ERROR: Failed to decode the next frame\n");
             return -1;
         }
         MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
-        processing_buff_offs += mp3FrameInfo.outputSamps;
-        processing_buff_ptr = processing_buff + processing_buff_offs;
+        intermediate_data_buffer_offs += mp3FrameInfo.outputSamps;
+        intermediate_data_buffer_ptr = intermediate_data_buffer + intermediate_data_buffer_offs;
     }
 
-    memcpy(dma_buff + dma_offset, processing_buff, DMA_BUFFER_SIZE / 2);
-    memcpy(file_buff, file_buff_ptr, bytes_left);
-    memcpy(processing_buff,
-           &processing_buff[DMA_BUFFER_SIZE / 4],
-           (processing_buff_offs - DMA_BUFFER_SIZE / 4) * 2);
+    /* copy audio from intermediate buffer to Direct Media Access buffer */
+    memcpy(dma_audio_buffer + dma_offset, intermediate_data_buffer, DMA_BUFFER_SIZE / 2);
+    memcpy(file_data_buffer, file_data_buffer_ptr, audio_bytes_amount);//skip nagłówek of mp3 frame - not sure
+    memcpy(intermediate_data_buffer,
+           &intermediate_data_buffer[DMA_BUFFER_SIZE / 4],
+           (intermediate_data_buffer_offs - DMA_BUFFER_SIZE / 4) * 2);
 
-    file_buff_ptr = file_buff + bytes_left;
+    file_data_buffer_ptr = file_data_buffer + audio_bytes_amount;
 
     if (f_read(&file,
-               file_buff_ptr,
-               (FILE_BUFFER_SIZE - bytes_left),
+               file_data_buffer_ptr,
+               (FILE_BUFFER_SIZE - audio_bytes_amount),
                (void *) &bytes_read) != F_OK)
     {
         xprintf("ERROR: Failed to read from file\n");
         return -1;
     }
 
-    file_buff_ptr = file_buff;
-    bytes_left += bytes_read;
-    processing_buff_offs -= DMA_BUFFER_SIZE / 4;
-    processing_buff_ptr = processing_buff + processing_buff_offs;
-    dma_buff_offs = BUFFER_OFFSET_NONE;
+    file_data_buffer_ptr = file_data_buffer;
+    audio_bytes_amount += bytes_read;
+    intermediate_data_buffer_offs -= DMA_BUFFER_SIZE / 4;
+    intermediate_data_buffer_ptr = intermediate_data_buffer + intermediate_data_buffer_offs;
+    dma_audio_buffer_offs = BUFFER_OFFSET_NONE;
 
     return 0;
 }
@@ -145,64 +149,64 @@ void play_directory()
 
     err = start_reading_file();
 
-    if (err)
-    {
+    if (err){
         return;
     }
-
 
     vTaskDelay(2);
 
     while(1){
-        if (dma_buff_offs == BUFFER_OFFSET_HALF){
+        if(dma_audio_buffer_offs == BUFFER_OFFSET_HALF){
         err = process_callback(0);
-    }
+        }
 
-    if (dma_buff_offs == BUFFER_OFFSET_FULL){
+        if(dma_audio_buffer_offs == BUFFER_OFFSET_FULL){
         err = process_callback(DMA_BUFFER_SIZE / 2);
-    }
+        }
 
-    if (bytes_left == 0){
+        if(audio_bytes_amount == 0){
        // err = mp3_stop();
-        if (!err){
-            xprintf("End of file \n");
+            if (!err){
+                xprintf("End of file \n");
            // CURRENT_FILE = next_file();
            // err = mp3_play();
             //redraw_title = 1;
-        }
-    }
+            }
+        }   
           
-    if (err)
-        break;
+        if (err)
+            break;
     }
     vTaskDelay(2);
-    
-    
 }
 
 int start_reading_file()
 {
-    if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
+    /* open File to play */
+    if (f_open(&file, "1:/example.mp3", FA_READ) != FR_OK)
     {
-        xprintf("ERROR: Failed to open file %s\n", FILES[CURRENT_FILE]);
+        xprintf("ERROR: Failed to open file\n");
         return -1;
     }
 
-    file_buff_ptr = file_buff;
+    /* set file_data_buffer pointer to file_data_buffer */
+    file_data_buffer_ptr = file_data_buffer;
 
-    if (f_read(&file, file_buff_ptr, FILE_BUFFER_SIZE, (void *) &bytes_left)
+    /* read File data */
+    if (f_read(&file, file_data_buffer_ptr, FILE_BUFFER_SIZE, (void *) &audio_bytes_amount)
         != F_OK)
     {
-        xprintf("ERROR: Failed to read from file %s\n", FILES[CURRENT_FILE]);
+        xprintf("ERROR: Failed to read from file\n");
         return -1;
     }
 
-    processing_buff_ptr = processing_buff;
-    processing_buff_offs = 0;
+    /* set intermediate_data_buffer_pointer to intermediate_data_buffer and set offset to beginning*/
+    intermediate_data_buffer_ptr = intermediate_data_buffer;
+    intermediate_data_buffer_offs = 0;
 
-    dma_buff_offs = BUFFER_OFFSET_NONE;
+    dma_audio_buffer_offs = BUFFER_OFFSET_NONE;
 
-    if (BSP_AUDIO_OUT_Play((uint16_t * ) & dma_buff[0], DMA_BUFFER_SIZE)
+    if (BSP_AUDIO_OUT_Play((uint16_t * ) & dma_audio_buffer[0], DMA_BUFFER_SIZE)
         != AUDIO_OK)
     {
         xprintf("ERROR: Failed to start the audio stream\n");
