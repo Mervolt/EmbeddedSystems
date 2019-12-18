@@ -61,9 +61,17 @@ typedef enum{
 }reset_play;
 
 typedef enum{
+  PAUSED,
+  PLAYING,
+  STOPPED,
+}song_state;
+
+typedef enum{
   PAUSE_PLAYING,
   STILL_PLAYING,
 }pause_play;
+
+volatile song_state current_song_state;
 
 volatile reset_play reset_playing;
 volatile pause_play pause_playing;
@@ -75,5 +83,11 @@ void play_directory();
 int next_file();
 int prev_file();
 int start_reading_file();
+int pause_audio();
+int stop_audio();
+int start_audio();
+int resume_audio();
+int prev_audio();
+int next_audio();
 
 #endif

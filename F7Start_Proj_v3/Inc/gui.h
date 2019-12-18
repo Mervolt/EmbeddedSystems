@@ -41,7 +41,19 @@ int skip_right_X;
 int minus_button_X;
 int plus_button_X;
 
-//Point points[10];
+
+typedef enum{
+  PREV_B,
+  NEXT_B,
+  PAUSE_B,
+  PLAY_B,
+  STOP_B,
+  NONE_B,
+}button_pressed;
+
+volatile button_pressed last_button_pressed;
+
+volatile int write_title;
 
 /* GUI functions */
 void initialize_button_values();
@@ -59,6 +71,7 @@ void draw_fill_bar(float part);
 int initialize_touchscreen();
 int lcd_start();
 void startResponsiveGUItask(void *argument);
+void draw_title(uint8_t *title);
 int is_button_y_axis();
 int is_play_button_x_axis();
 int is_stop_button_x_axis();
@@ -66,32 +79,5 @@ int is_pause_button_x_axis();
 int is_prevsong_button_x_axis();
 int is_nextsong_button_x_axis();
 //void start_touch_task(void *argument);
-
-/* player state enum */
-/*typedef enum
-{
-  STOP_PRESSED,
-  STOPPED,
-  PLAY_PRESSED,
-  PLAYING,
-  PAUSE_PRESSED,
-  PAUSED,
-  RESUME_PRESSED,
-  PREV_PRESSED_PLAYING,
-  NEXT_PRESSED_PLAYING,
-  PREV_PRESSED_STOPPED,
-  NEXT_PRESSED_STOPPED,
-  PREV_PRESSED_PAUSED,
-  NEXT_PRESSED_PAUSED,
-  VOL_UP_PRESSED,
-  VOL_DOWN_PRESSED,
-} player_states;
-*/
-/* GUI <-> audio processing communication */
-/*
-volatile player_states player_state;
-volatile int redraw_title;
-*/
-
 
 #endif

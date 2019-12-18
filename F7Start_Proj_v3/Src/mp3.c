@@ -34,6 +34,8 @@ int read_directory(char *path){
     CURRENT_FILE = 0;
     pause_playing = STILL_PLAYING;
     reset_playing = CONTINUE_PLAYING;
+    last_button_pressed=NONE_B;
+    current_song_state=STOPPED;
 
     DIR dir;
     static FILINFO fno;
@@ -150,52 +152,106 @@ void play_directory(){
     if (err){
         return;
     }
+
+    write_title=1;
+
     while(1){
-        if(reset_playing == CONTINUE_PLAYING){
-            if(dma_audio_buffer_offs == BUFFER_OFFSET_HALF){
-            err = process_callback(0);
-            }
+        if(current_song_state==PLAYING){
 
-            if(dma_audio_buffer_offs == BUFFER_OFFSET_FULL){
-            err = process_callback(DMA_BUFFER_SIZE / 2);
-            }
-            if(audio_bytes_amount == 0){
+            if(last_button_pressed==PREV_B){
+
+                xprintf("playing,prev\n");
+                err= prev_audio();
+                current_song_state=PLAYING;
+
+            }else if(last_button_pressed==NEXT_B){
+                xprintf("playing,next\n");
+                err= next_audio();
+                current_song_state=PLAYING;
+
+            }else if(last_button_pressed==PAUSE_B){
+                xprintf("playing,pause\n");
+                err = pause_audio();
+
+            }else if(last_button_pressed==STOP_B){
+                xprintf("playing,stop\n");
+                err = stop_audio();
+
+            }else{//still playing for play_b,none_b
+                if(dma_audio_buffer_offs == BUFFER_OFFSET_HALF){
+                    err = process_callback(0);
+                }
+
+                if(dma_audio_buffer_offs == BUFFER_OFFSET_FULL){
+                    err = process_callback(DMA_BUFFER_SIZE / 2);
+                }
+                if(audio_bytes_amount == 0){
       
-                if (!err){
-                    xprintf("End of file \n");
-                    CURRENT_FILE = next_file();
-                    play_directory();
-            // err = mp3_play();
-            //redraw_title = 1;
-                }
-            }   
-            if (err)
-                break;
-            vTaskDelay(2);
-        }
-        else if(reset_playing == RESET_PLAYING){
-            reset_playing = CONTINUE_PLAYING;
-            if(BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW) != AUDIO_OK){
-                    xprintf("ERROR: Failed to stop the audio stream\n");
-                }
-
-            memset(dma_audio_buffer, 0, DMA_BUFFER_SIZE);
-            memset(intermediate_data_buffer, 0, DMA_BUFFER_SIZE);
-            memset(file_data_buffer, 0, FILE_BUFFER_SIZE);
-
-            if (f_close(&file) != F_OK){
-                xprintf("ERROR: Failed to close audio file\n");
+                    if (!err){
+                        xprintf("End of file \n");
+                        CURRENT_FILE = next_file();
+                        err=start_audio();
+                        write_title=1;
+                    }
+                }   
+               
             }
-            play_directory();
+
+        }else if(current_song_state==PAUSED){
+            if(last_button_pressed==PREV_B){
+                xprintf("paused,prev\n");
+                err= prev_audio();
+                current_song_state=PAUSED;
+
+            }else if(last_button_pressed==NEXT_B){
+                xprintf("paused,next\n");
+                err= next_audio();
+                current_song_state=PAUSED;
+
+            }else if(last_button_pressed==PLAY_B){
+                xprintf("paused,play\n");
+                err= resume_audio();
+
+            }else if(last_button_pressed==STOP_B){
+
+                //TODO working properly for combination:
+                //playing...pause...stop...playing
+                xprintf("paused,stop\n");
+                err = stop_audio();
+
+            }else{//do nothing for pause,none,
+            }
+        }else if(current_song_state==STOPPED){
+            if(last_button_pressed==PREV_B){
+                xprintf("stopped,prev\n");
+                CURRENT_FILE=prev_file();
+                current_song_state=STOPPED;
+
+            }else if(last_button_pressed==NEXT_B){
+                xprintf("stoppped,next\n");
+                CURRENT_FILE=next_file();
+                current_song_state=STOPPED;
+
+            }else if(last_button_pressed==PLAY_B){
+                xprintf("stopped,play\n");
+                err= start_audio();
+            }else{//do nothing for pause,stop,none,
+            }
         }
-    }
+
+        last_button_pressed=NONE_B;
+
+        if (err)//break main loop
+            break;
+        vTaskDelay(2);
+    }//end while
 }
 
 int start_reading_file(){
     /* open File to play */
     if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
     {
-        xprintf("ERROR: Failed to open file\n");
+        xprintf("Failed to open file %s!\n",FILES[CURRENT_FILE]);
         return -1;
     }
 
@@ -206,7 +262,7 @@ int start_reading_file(){
     if (f_read(&file, file_data_buffer_ptr, FILE_BUFFER_SIZE, (void *) &audio_bytes_amount)
         != F_OK)
     {
-        xprintf("ERROR: Failed to read from file\n");
+        xprintf("Failed to read from file %s!\n",FILES[CURRENT_FILE]);
         return -1;
     }
 
@@ -219,10 +275,95 @@ int start_reading_file(){
     if (BSP_AUDIO_OUT_Play((uint16_t * ) & dma_audio_buffer[0], DMA_BUFFER_SIZE)
         != AUDIO_OK)
     {
-        xprintf("ERROR: Failed to start the audio stream\n");
+        xprintf("Failed to start the audio!\n");
         return -1;
     }
 
+    return 0;
+}
+
+int stop_audio(){
+    if(BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW) != AUDIO_OK){
+        xprintf("Failed to stop audio!\n");
+        return 1;
+    }
+
+    memset(dma_audio_buffer, 0, DMA_BUFFER_SIZE);
+    memset(intermediate_data_buffer, 0, DMA_BUFFER_SIZE);
+    memset(file_data_buffer, 0, FILE_BUFFER_SIZE);
+
+    if (f_close(&file) != F_OK){
+        xprintf("Failed to close file- %s !\n",FILES[CURRENT_FILE]);
+        return 2;
+    }
+
+    current_song_state=STOPPED;
+
+    return 0;
+}
+
+int start_audio(){
+    if(start_reading_file()){
+        xprintf("Failed to start audio!\n");
+        return 1;
+    }
+
+    current_song_state = PLAYING;
+    return 0;
+}
+
+int pause_audio(){
+    if (BSP_AUDIO_OUT_Pause() != AUDIO_OK)
+    {
+        xprintf("Failed to pause audio!\n");
+        return 1;
+    }
+    current_song_state=PAUSED;
+    return 0;
+}
+
+int resume_audio(){
+    if (BSP_AUDIO_OUT_Resume() != AUDIO_OK)
+    {
+        xprintf("Failed to resume audio!\n");
+        return 1;
+    }
+
+    current_song_state=PLAYING;
+    return 0;
+}
+
+int prev_audio(){
+    if(stop_audio()){
+        xprintf("Failed to skip to previous audio[S]!\n");
+        return 1;
+    }
+
+    CURRENT_FILE = prev_file();
+
+    if(start_reading_file()){
+        xprintf("Failed to skip to previous audio[R]!\n");
+        return 1;
+    }
+
+    write_title=1;
+    return 0;
+}
+
+int next_audio(){
+    if(stop_audio()){
+        xprintf("Failed to skip to next audio![S]\n");
+        return 1;
+    }
+
+    CURRENT_FILE = next_file();
+
+    if(start_reading_file()){
+        xprintf("Failed to skip to next audio![R]\n");
+        return 1;
+    }
+
+    write_title=1;
     return 0;
 }
 

@@ -26,10 +26,18 @@ int is_prevsong_button_x_axis(){
 
 
 void startResponsiveGUItask(void *argument){
+  write_title=0;
   lcd_start();
   initialize_touchscreen();
   draw_background();
   while(1){
+
+      if(write_title){
+          draw_title(FILES[CURRENT_FILE] +3 );
+          write_title=0;
+      }
+
+      vTaskDelay(200);
     if (BSP_TS_GetState(&TS_State) != TS_OK){
         while (1) {}
     }
@@ -37,25 +45,32 @@ void startResponsiveGUItask(void *argument){
 
         if(is_button_y_axis()){
             if(is_play_button_x_axis()){
-                //TODO
+                last_button_pressed=PLAY_B;
             }
             if(is_stop_button_x_axis()){
+                last_button_pressed=STOP_B;
+
                 reset_playing = RESET_PLAYING;
             }
             if(is_pause_button_x_axis()){
-                //TODO
+                last_button_pressed=PAUSE_B;
             }
             if(is_nextsong_button_x_axis()){
-                CURRENT_FILE = next_file();
+              
+                last_button_pressed= NEXT_B;
+
                 reset_playing = RESET_PLAYING;
             }
             if(is_prevsong_button_x_axis()){
-                CURRENT_FILE = prev_file();
+              
+                last_button_pressed=PREV_B;
+
+
                 reset_playing = RESET_PLAYING;
             }
         }
     }
-    vTaskDelay(200);
+    
   }
 }
 
@@ -108,16 +123,36 @@ int initialize_touchscreen(void)
     return 0;
 }
 
+void draw_title(uint8_t *title){
+    //erase prev title
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+    BSP_LCD_FillRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+
+    //redraw title frame
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+    BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_DisplayStringAt(0, 0.15*LCD_Y_SIZE , title, CENTER_MODE);
+}
+
 void draw_background(void){
   /* Select the LCD Background Layer  */
-  BSP_LCD_SelectLayer(0);
+  BSP_LCD_SelectLayer(1);
   BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+    //title frame
   BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+ 
+  BSP_LCD_SelectLayer(0);
+
+
+ //fill bar
   BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE);
   BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
 
 
-	//strzalka prev
+	// prev button
   int16_t num_of_points_left= 3;
   pPoint pointsL =(pPoint) malloc( sizeof(Point) *num_of_points_left); 
   pointsL[0].X=0.10*LCD_X_SIZE;//middle of arrow 
@@ -128,7 +163,7 @@ void draw_background(void){
   pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
   BSP_LCD_FillPolygon(pointsL, num_of_points_left);
   
-   
+
   pointsL[0].X=0.15*LCD_X_SIZE;//middle of arrow 
   pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
   pointsL[1].X=0.21*LCD_X_SIZE;//top of arrow
@@ -139,11 +174,11 @@ void draw_background(void){
 
   
 
-  //kwadrat stopu
+  // stop button
   BSP_LCD_FillRect(0.28*LCD_X_SIZE,0.70*LCD_Y_SIZE,0.10*LCD_X_SIZE,0.10*LCD_X_SIZE);
   
   
-  //trojkat play
+  //play button
   int16_t num_of_points_triangle= 3;
   pPoint pointsT =(pPoint) malloc( sizeof(Point) *num_of_points_triangle); 
   pointsT[0].X=0.45*LCD_X_SIZE; //top of triangle
@@ -152,16 +187,16 @@ void draw_background(void){
   pointsT[1].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;
   pointsT[2].X=0.55*LCD_X_SIZE;//mid of triangle
   pointsT[2].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
-  BSP_LCD_FillPolygon(pointsT, num_of_points_triangle);//szer 0.06 ; od 0.49 do do 0.55
+  BSP_LCD_FillPolygon(pointsT, num_of_points_triangle);
   
   
-  //pause
+  //pause button
   BSP_LCD_FillRect(0.63*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
   
   BSP_LCD_FillRect(0.68*LCD_X_SIZE, 0.70*LCD_Y_SIZE, 0.03*LCD_X_SIZE, 0.10*LCD_X_SIZE);
 
   
-  //strzalka next
+  // next button
   pointsL[0].X=0.85*LCD_X_SIZE;//middle of arrow 
   pointsL[0].Y=0.70*LCD_Y_SIZE + 0.05*LCD_X_SIZE;
   pointsL[1].X=0.79*LCD_X_SIZE;//top of arrow
@@ -191,8 +226,6 @@ void draw_background(void){
 	// 	i+=0.01;
 	// }
   
-  
-  //select Foreground Layer
   BSP_LCD_SelectLayer(1);
 }
 
