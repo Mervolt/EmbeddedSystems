@@ -280,6 +280,7 @@ int main(void)
 
   printf("Regular printf\n");
 
+ volume = 20;
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -1609,6 +1610,8 @@ void StartDefaultTask(void const * argument)
   if(read_directory("1:/")){
     while (1) {}
   }
+
+  bitrate=0;
 
   xprintf("Playlist initialized...\n");
   xprintf("Player ready!\n");

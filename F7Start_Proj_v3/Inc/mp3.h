@@ -46,6 +46,7 @@ char FILES[NUMBER_OF_FILES][FILE_NAME_LENGTH];
 int FILE_COUNTER;
 int CURRENT_FILE;
 FIL file;
+int bitrate;
 
 /* DMA progress enum */
 enum
@@ -56,25 +57,12 @@ enum
 };
 
 typedef enum{
-  RESET_PLAYING,
-  CONTINUE_PLAYING,
-}reset_play;
-
-typedef enum{
   PAUSED,
   PLAYING,
   STOPPED,
 }song_state;
 
-typedef enum{
-  PAUSE_PLAYING,
-  STILL_PLAYING,
-}pause_play;
-
 volatile song_state current_song_state;
-
-volatile reset_play reset_playing;
-volatile pause_play pause_playing;
 
 /* MP3 API functions */
 int mp3_init();
@@ -89,5 +77,7 @@ int start_audio();
 int resume_audio();
 int prev_audio();
 int next_audio();
+int audio_volume_down(int delta);
+int audio_volume_up(int delta);
 
 #endif

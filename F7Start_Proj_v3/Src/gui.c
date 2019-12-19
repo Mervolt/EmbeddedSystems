@@ -4,6 +4,22 @@ int is_button_y_axis(){
     return (TS_State.touchY[0] > 0.7 * LCD_Y_SIZE) && (TS_State.touchY[0] < 0.7 * LCD_Y_SIZE + 0.1 * LCD_X_SIZE);
 }
 
+int is_top_button_y_axis(){
+     return (TS_State.touchY[0] > 0.04 * LCD_Y_SIZE) && (TS_State.touchY[0] < 0.27 * LCD_Y_SIZE + 0.1 * LCD_X_SIZE);
+}
+
+int is_volume_down_x_axis(){
+    return (TS_State.touchX[0] > 0.03*LCD_X_SIZE) && (TS_State.touchX[0] < 0.17*LCD_X_SIZE);
+}
+
+int is_volume_up_x_axis(){
+    return (TS_State.touchX[0] > 0.83*LCD_X_SIZE) && (TS_State.touchX[0] < 0.97*LCD_X_SIZE);
+}
+
+int is_menu_x_axis(){
+    return (TS_State.touchX[0] > 0.2*LCD_X_SIZE) && (TS_State.touchX[0] < 0.8*LCD_X_SIZE);
+}
+
 int is_play_button_x_axis(){
     return (TS_State.touchX[0] > 0.45*LCD_X_SIZE) && (TS_State.touchX[0] < 0.55*LCD_X_SIZE);
 }
@@ -36,6 +52,10 @@ void startResponsiveGUItask(void *argument){
           draw_title(FILES[CURRENT_FILE] +3 );
           write_title=0;
       }
+      if(draw_volume){
+          draw_volume_bar();
+          draw_volume=0;
+      }
 
       vTaskDelay(200);
     if (BSP_TS_GetState(&TS_State) != TS_OK){
@@ -49,24 +69,27 @@ void startResponsiveGUItask(void *argument){
             }
             if(is_stop_button_x_axis()){
                 last_button_pressed=STOP_B;
-
-                reset_playing = RESET_PLAYING;
             }
             if(is_pause_button_x_axis()){
                 last_button_pressed=PAUSE_B;
             }
             if(is_nextsong_button_x_axis()){
               
-                last_button_pressed= NEXT_B;
-
-                reset_playing = RESET_PLAYING;
+            last_button_pressed= NEXT_B;
             }
             if(is_prevsong_button_x_axis()){
-              
                 last_button_pressed=PREV_B;
-
-
-                reset_playing = RESET_PLAYING;
+            }
+        }else if(is_top_button_y_axis()){
+            if(is_volume_down_x_axis()){
+                last_button_pressed =VOL_DOWN_B;
+            }
+            if(is_menu_x_axis()){
+                last_button_pressed= MENU_B;
+                xprintf("TODO- menu????\n");
+            }
+            if(is_volume_up_x_axis()){
+                last_button_pressed = VOL_UP_B;
             }
         }
     }
@@ -127,11 +150,11 @@ void draw_title(uint8_t *title){
     //erase prev title
     BSP_LCD_SelectLayer(1);
     BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-    BSP_LCD_FillRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+    BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
 
     //redraw title frame
     BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
-    BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+    BSP_LCD_DrawRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
 
     BSP_LCD_SelectLayer(1);
     BSP_LCD_DisplayStringAt(0, 0.15*LCD_Y_SIZE , title, CENTER_MODE);
@@ -142,14 +165,16 @@ void draw_background(void){
   BSP_LCD_SelectLayer(1);
   BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     //title frame
-  BSP_LCD_DrawRect(0.1*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.8*LCD_X_SIZE,0.2*LCD_Y_SIZE);
+  BSP_LCD_DrawRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
  
   BSP_LCD_SelectLayer(0);
+  draw_volume_bar();
+  BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
 
-
+  draw_volume=0;
  //fill bar
-  BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE);
-  BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE-1);
+  BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE-1);
 
 
 	// prev button
@@ -213,20 +238,32 @@ void draw_background(void){
   pointsL[2].X=0.84*LCD_X_SIZE;
   pointsL[2].Y=0.70*LCD_Y_SIZE + 0.1*LCD_X_SIZE;//bottom of arrow
   BSP_LCD_FillPolygon(pointsL, num_of_points_left);
-  
-  //draw_fill_bar(0.15);
-  
-	// float i =0;
-	// while(i<1){
-		
-	// 	xprintf("%f",i);
-	// 	draw_fill_bar(i);
-	// 	//vTaskDelay(100);
-		
-	// 	i+=0.01;
-	// }
-  
+
+
+  //minus volume button
+  BSP_LCD_DrawCircle(0.1*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.04*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+
+  //plus volume button
+  BSP_LCD_DrawCircle(0.9*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.84*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawVLine(0.9*LCD_X_SIZE,0.04*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+
   BSP_LCD_SelectLayer(1);
+}
+
+void draw_volume_bar(){
+
+
+    float vol_ratio = (volume*1.0)/100.0;
+    //volume bar frame
+    BSP_LCD_SelectLayer(0);
+    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+    BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.25*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.03*LCD_Y_SIZE);
+
+    BSP_LCD_SetTextColor(LCD_COLOR_RED);
+    BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.25*LCD_Y_SIZE,0.6*LCD_X_SIZE*vol_ratio,0.03*LCD_Y_SIZE);
+
 }
 
 void draw_fill_bar(float part){

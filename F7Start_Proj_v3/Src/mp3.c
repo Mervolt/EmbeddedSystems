@@ -5,7 +5,6 @@
 int mp3_init(){
     //redraw_title = 0;
 
-    volume = 20;
 
     if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE1,
                            volume,
@@ -25,15 +24,12 @@ int mp3_init(){
         xprintf("ERROR: Failed to initialize the MP3 decoder\n");
         return -1;
     }
-
     return 0;
 }
 
 int read_directory(char *path){
     FILE_COUNTER = 0;
     CURRENT_FILE = 0;
-    pause_playing = STILL_PLAYING;
-    reset_playing = CONTINUE_PLAYING;
     last_button_pressed=NONE_B;
     current_song_state=STOPPED;
 
@@ -112,6 +108,7 @@ int process_callback(int dma_offset){
             return -1;
         }
         MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
+        bitrate = mp3FrameInfo.bitrate;
         intermediate_data_buffer_offs += mp3FrameInfo.outputSamps;
         intermediate_data_buffer_ptr = intermediate_data_buffer + intermediate_data_buffer_offs;
     }
@@ -217,6 +214,7 @@ void play_directory(){
                 //TODO working properly for combination:
                 //playing...pause...stop...playing
                 xprintf("paused,stop\n");
+                resume_audio();
                 err = stop_audio();
 
             }else{//do nothing for pause,none,
@@ -239,6 +237,12 @@ void play_directory(){
             }
         }
 
+        if(last_button_pressed==VOL_UP_B){
+            err =audio_volume_up(5);
+        }else if(last_button_pressed==VOL_DOWN_B){
+            err = audio_volume_down(5);
+        }
+
         last_button_pressed=NONE_B;
 
         if (err)//break main loop
@@ -247,8 +251,22 @@ void play_directory(){
     }//end while
 }
 
+int get_song_duration(){
+    FILINFO * info;
+    f_stat(FILES[CURRENT_FILE], info);
+
+    int size= info->fsize;
+
+    xprintf("Bitrate: %d, Size: %d",bitrate,size);
+
+    return size;
+
+}
+
 int start_reading_file(){
     /* open File to play */
+    get_song_duration();
+
     if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
     {
         xprintf("Failed to open file %s!\n",FILES[CURRENT_FILE]);
@@ -257,6 +275,8 @@ int start_reading_file(){
 
     /* set file_data_buffer pointer to file_data_buffer */
     file_data_buffer_ptr = file_data_buffer;
+
+    
 
     /* read File data */
     if (f_read(&file, file_data_buffer_ptr, FILE_BUFFER_SIZE, (void *) &audio_bytes_amount)
@@ -280,6 +300,43 @@ int start_reading_file(){
     }
 
     return 0;
+}
+
+int audio_volume_up(int delta){
+
+    if(volume + delta >100){
+        volume=100;
+    }else{
+        volume += delta;
+    }
+
+    if (BSP_AUDIO_OUT_SetVolume(volume) != AUDIO_OK)
+    {
+        xprintf("Problem with volume up!\n");
+        return 1;
+    }
+
+    draw_volume =1;
+    return 0;
+
+}
+
+int audio_volume_down(int delta){
+
+
+    if(volume - delta < 0 ){
+        volume=0;
+    }else{
+        volume -= delta;
+    }
+
+    if (BSP_AUDIO_OUT_SetVolume(volume) != AUDIO_OK)
+    {
+        xprintf("Problem with volume down!\n");
+        return 1;
+    }
+
+    draw_volume =1;
 }
 
 int stop_audio(){

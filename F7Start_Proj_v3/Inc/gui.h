@@ -48,12 +48,16 @@ typedef enum{
   PAUSE_B,
   PLAY_B,
   STOP_B,
+  VOL_UP_B,
+  VOL_DOWN_B,
   NONE_B,
+  MENU_B,
 }button_pressed;
 
 volatile button_pressed last_button_pressed;
 
 volatile int write_title;
+volatile int draw_volume;
 
 /* GUI functions */
 void initialize_button_values();
@@ -64,7 +68,6 @@ void draw_pause_button();
 void draw_next_button();
 void draw_minus_button();
 void draw_plus_button();
-void draw_volume();
 void draw_title();
 void draw_background();
 void draw_fill_bar(float part);
@@ -78,6 +81,7 @@ int is_stop_button_x_axis();
 int is_pause_button_x_axis();
 int is_prevsong_button_x_axis();
 int is_nextsong_button_x_axis();
+void draw_volume_bar();
 //void start_touch_task(void *argument);
 
 #endif
