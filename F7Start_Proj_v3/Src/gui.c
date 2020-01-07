@@ -49,7 +49,7 @@ void startResponsiveGUItask(void *argument){
   while(1){
 
       if(write_title){
-          draw_title(FILES[CURRENT_FILE] +3 );
+          draw_title(FILES[CURRENT_FILE] + 3);
           write_title=0;
       }
       if(draw_volume){
@@ -135,8 +135,7 @@ int lcd_start(void){
     return 0;
 }
 
-int initialize_touchscreen(void)
-{
+int initialize_touchscreen(void){
     uint8_t status = 0;
     status = BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
     if (status != TS_OK)

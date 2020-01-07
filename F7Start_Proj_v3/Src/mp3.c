@@ -105,7 +105,13 @@ int process_callback(int dma_offset){
                       0))
         {
             xprintf("ERROR: Failed to decode the next frame\n");
-            return -1;
+            int error  = stop_audio();
+            if(!error){
+                CURRENT_FILE = next_file();
+                error = start_audio();
+                write_title=1;
+            }
+            return error;
         }
         MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
         bitrate = mp3FrameInfo.bitrate;
@@ -186,9 +192,12 @@ void play_directory(){
       
                     if (!err){
                         xprintf("End of file \n");
-                        CURRENT_FILE = next_file();
-                        err=start_audio();
-                        write_title=1;
+                        err = stop_audio();
+                        if(!err){
+                            CURRENT_FILE = next_file();
+                            err=start_audio();
+                            write_title=1;
+                        }
                     }
                 }   
                
@@ -211,8 +220,6 @@ void play_directory(){
 
             }else if(last_button_pressed==STOP_B){
 
-                //TODO working properly for combination:
-                //playing...pause...stop...playing
                 xprintf("paused,stop\n");
                 resume_audio();
                 err = stop_audio();
@@ -223,16 +230,18 @@ void play_directory(){
             if(last_button_pressed==PREV_B){
                 xprintf("stopped,prev\n");
                 CURRENT_FILE=prev_file();
+                write_title = 1;
                 current_song_state=STOPPED;
 
             }else if(last_button_pressed==NEXT_B){
                 xprintf("stoppped,next\n");
                 CURRENT_FILE=next_file();
+                write_title = 1;
                 current_song_state=STOPPED;
 
             }else if(last_button_pressed==PLAY_B){
                 xprintf("stopped,play\n");
-                err= start_audio();
+                err = start_audio();
             }else{//do nothing for pause,stop,none,
             }
         }
@@ -251,21 +260,38 @@ void play_directory(){
     }//end while
 }
 
-int get_song_duration(){
-    FILINFO * info;
-    f_stat(FILES[CURRENT_FILE], info);
+void get_song_duration(){
 
-    int size= info->fsize;
+    if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
+    {
+        xprintf("Failed to open file while getting duration%s!\n",FILES[CURRENT_FILE]);
+    }
+    file_data_buffer_ptr = file_data_buffer;
+    if (f_read(&file, file_data_buffer_ptr, FILE_BUFFER_SIZE, (void *) &audio_bytes_amount)
+        != F_OK)
+    {
+        xprintf("Failed to read from file while getting duration%s!\n",FILES[CURRENT_FILE]);
+    }
 
-    xprintf("Bitrate: %d, Size: %d",bitrate,size);
-
-    return size;
+    while(1){
+        process_callback(0);
+        if(audio_bytes_amount == 0)
+            break;
+        file_frame_amount+=1;
+    }
+    xprintf("File frame amount %d", file_frame_amount);
+    if (f_close(&file) != F_OK){
+        xprintf("Failed to close file while getting duration %s !\n",FILES[CURRENT_FILE]);
+    }
 
 }
 
+
 int start_reading_file(){
     /* open File to play */
-    get_song_duration();
+    current_frame_counter = 0;
+
+    //get_song_duration();
 
     if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
     {
@@ -316,14 +342,12 @@ int audio_volume_up(int delta){
         return 1;
     }
 
-    draw_volume =1;
+    draw_volume = 1;
     return 0;
 
 }
 
 int audio_volume_down(int delta){
-
-
     if(volume - delta < 0 ){
         volume=0;
     }else{
@@ -336,7 +360,8 @@ int audio_volume_down(int delta){
         return 1;
     }
 
-    draw_volume =1;
+    draw_volume = 1;
+    return 0;
 }
 
 int stop_audio(){
@@ -403,7 +428,7 @@ int prev_audio(){
         return 1;
     }
 
-    write_title=1;
+    write_title = 1;
     return 0;
 }
 
@@ -420,11 +445,12 @@ int next_audio(){
         return 1;
     }
 
-    write_title=1;
+    write_title = 1;
     return 0;
 }
 
 int next_file(){
+    xprintf("Aktualny file %d \n", (CURRENT_FILE + 1) % FILE_COUNTER);
     return (CURRENT_FILE + 1) % FILE_COUNTER;
 }
 

@@ -1611,7 +1611,7 @@ void StartDefaultTask(void const * argument)
     while (1) {}
   }
 
-  bitrate=0;
+  //bitrate=0;
 
   xprintf("Playlist initialized...\n");
   xprintf("Player ready!\n");

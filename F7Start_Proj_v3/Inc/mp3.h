@@ -47,6 +47,9 @@ int FILE_COUNTER;
 int CURRENT_FILE;
 FIL file;
 int bitrate;
+int file_frame_amount;
+int current_frame_counter;
+
 
 /* DMA progress enum */
 enum
