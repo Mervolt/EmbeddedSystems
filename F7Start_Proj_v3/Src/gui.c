@@ -47,7 +47,6 @@ void startResponsiveGUItask(void *argument){
   initialize_touchscreen();
   draw_background();
   while(1){
-
       if(write_title){
           draw_title(FILES[CURRENT_FILE] + 3);
           write_title=0;
@@ -58,6 +57,7 @@ void startResponsiveGUItask(void *argument){
       }
 
       vTaskDelay(200);
+      fill_progress_bar(currently_read_bytes);
     if (BSP_TS_GetState(&TS_State) != TS_OK){
         while (1) {}
     }
@@ -115,7 +115,7 @@ int lcd_start(void){
     BSP_LCD_SelectLayer(0);
 
     /* Clear the Background Layer */
-    BSP_LCD_Clear(LCD_COLOR_GREEN);
+    BSP_LCD_Clear(LCD_COLOR_LIGHTBLUE);
     BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
 
     BSP_LCD_SetColorKeying(1, LCD_COLOR_WHITE);
@@ -145,18 +145,63 @@ int initialize_touchscreen(void){
     return 0;
 }
 
+void fill_progress_bar(int current_progress){
+    float progress_helper = current_progress * 1.0 / FILE_SIZES[CURRENT_FILE];
+    progress_helper = progress_helper * 100.0;
+    progress_bar_status = progress_helper * LCD_X_SIZE / 100;
+    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+    if(progress_bar_status > 478)
+        progress_bar_status = 478;
+    BSP_LCD_FillRect(1, 0.32*LCD_Y_SIZE + 1, progress_bar_status, 0.13*LCD_Y_SIZE - 2);
+}
+
+void clear_progress_bar(){
+    currently_read_bytes = 0;
+    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+    BSP_LCD_FillRect(1, 0.32*LCD_Y_SIZE + 1, LCD_X_SIZE - 2, 0.13*LCD_Y_SIZE - 2);
+}
+
+
 void draw_title(uint8_t *title){
+    actual_file = CURRENT_FILE;
+    next_file_to_write = (CURRENT_FILE+1) % FILE_COUNTER;
+    if(CURRENT_FILE == 0){
+        prev_file_to_write = FILE_COUNTER - 1;
+    }
+    else{
+        prev_file_to_write = (CURRENT_FILE - 1) % FILE_COUNTER;
+    }
+    next_title = FILES[next_file_to_write] + 3;
+    prev_title = FILES[prev_file_to_write] + 3;
+
+
     //erase prev title
     BSP_LCD_SelectLayer(1);
-    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
-    BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
 
-    //redraw title frame
+    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+    BSP_LCD_FillRect(0.2*LCD_X_SIZE + 1, 0.05*LCD_Y_SIZE + 1,0.6*LCD_X_SIZE - 2,0.2*LCD_Y_SIZE - 1);
+
+    //redraw title frame CHECK_IF_NEEDED
     BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     BSP_LCD_DrawRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
 
+    //redraw next song title frame
+    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+    BSP_LCD_FillRect(0.5*LCD_X_SIZE + 2, 0.5*LCD_Y_SIZE + 1,0.5*LCD_X_SIZE - 2 - 1, 0.17*LCD_Y_SIZE - 2);
+
+    //redraw prev song title frame
+    BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+    BSP_LCD_FillRect(0, 0.5*LCD_Y_SIZE + 1, 0.5*LCD_X_SIZE - 2, 0.17 *LCD_Y_SIZE - 2);
+
     BSP_LCD_SelectLayer(1);
-    BSP_LCD_DisplayStringAt(0, 0.15*LCD_Y_SIZE , title, CENTER_MODE);
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+
+    BSP_LCD_DisplayStringAt(0, 0.15*LCD_Y_SIZE, title, CENTER_MODE);
+
+    BSP_LCD_DisplayStringAt(0.55*LCD_X_SIZE, 0.57*LCD_Y_SIZE, next_title, LEFT_MODE);
+    
+    BSP_LCD_DisplayStringAt(0.05*LCD_X_SIZE, 0.57*LCD_Y_SIZE, prev_title, LEFT_MODE);
+
 }
 
 void draw_background(void){
@@ -171,9 +216,12 @@ void draw_background(void){
   BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
 
   draw_volume=0;
- //fill bar
-  BSP_LCD_DrawHLine(0,0.35*LCD_Y_SIZE,LCD_X_SIZE-1);
-  BSP_LCD_DrawHLine(0,0.55*LCD_Y_SIZE,LCD_X_SIZE-1);
+
+    //split title bar
+  BSP_LCD_DrawVLine(0.5*LCD_X_SIZE, 0.50*LCD_Y_SIZE, 0.17 *LCD_Y_SIZE);
+  BSP_LCD_DrawVLine(0.5*LCD_X_SIZE + 1, 0.50*LCD_Y_SIZE, 0.17*LCD_Y_SIZE);
+  BSP_LCD_DrawVLine(0.5*LCD_X_SIZE - 1, 0.50*LCD_Y_SIZE , 0.17*LCD_Y_SIZE);
+
 
 
 	// prev button
@@ -239,28 +287,51 @@ void draw_background(void){
   BSP_LCD_FillPolygon(pointsL, num_of_points_left);
 
 
+  //progress frame 
+  BSP_LCD_DrawHLine(1, 0.32*LCD_Y_SIZE, LCD_X_SIZE - 2);
+  BSP_LCD_DrawHLine(1, 0.32*LCD_Y_SIZE - 1, LCD_X_SIZE - 2);
+
+  BSP_LCD_DrawHLine(1, 0.45*LCD_Y_SIZE, LCD_X_SIZE - 2);
+  BSP_LCD_DrawHLine(1, 0.45*LCD_Y_SIZE - 1, LCD_X_SIZE - 2);
+
+  //next and previous song frame
+  BSP_LCD_DrawHLine(1, 0.50*LCD_Y_SIZE, LCD_X_SIZE - 2);
+  BSP_LCD_DrawHLine(1, 0.50*LCD_Y_SIZE - 1, LCD_X_SIZE - 2);
+
+  BSP_LCD_DrawHLine(1, 0.67*LCD_Y_SIZE, LCD_X_SIZE - 2);
+  BSP_LCD_DrawHLine(1, 0.67*LCD_Y_SIZE - 1, LCD_X_SIZE - 2);
+
+
   //minus volume button
   BSP_LCD_DrawCircle(0.1*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE);
+  BSP_LCD_DrawCircle(0.1*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE + 1);
+  BSP_LCD_DrawCircle(0.1*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE - 1);
   BSP_LCD_DrawHLine(0.04*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.04*LCD_X_SIZE,0.15*LCD_Y_SIZE + 1,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.04*LCD_X_SIZE,0.15*LCD_Y_SIZE - 1,0.12*LCD_X_SIZE);
 
   //plus volume button
   BSP_LCD_DrawCircle(0.9*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE);
+  BSP_LCD_DrawCircle(0.9*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE + 1);
+  BSP_LCD_DrawCircle(0.9*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.07*LCD_X_SIZE - 1);
   BSP_LCD_DrawHLine(0.84*LCD_X_SIZE,0.15*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.84*LCD_X_SIZE,0.15*LCD_Y_SIZE + 1,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawHLine(0.84*LCD_X_SIZE,0.15*LCD_Y_SIZE - 1,0.12*LCD_X_SIZE);
   BSP_LCD_DrawVLine(0.9*LCD_X_SIZE,0.04*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawVLine(0.9*LCD_X_SIZE + 1,0.04*LCD_Y_SIZE,0.12*LCD_X_SIZE);
+  BSP_LCD_DrawVLine(0.9*LCD_X_SIZE - 1,0.04*LCD_Y_SIZE,0.12*LCD_X_SIZE);
 
   BSP_LCD_SelectLayer(1);
 }
 
 void draw_volume_bar(){
-
-
     float vol_ratio = (volume*1.0)/100.0;
     //volume bar frame
     BSP_LCD_SelectLayer(0);
-    BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+    BSP_LCD_SetTextColor(LCD_COLOR_GRAY);
     BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.25*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.03*LCD_Y_SIZE);
 
-    BSP_LCD_SetTextColor(LCD_COLOR_RED);
+    BSP_LCD_SetTextColor(LCD_COLOR_ORANGE);
     BSP_LCD_FillRect(0.2*LCD_X_SIZE,0.25*LCD_Y_SIZE,0.6*LCD_X_SIZE*vol_ratio,0.03*LCD_Y_SIZE);
 
 }

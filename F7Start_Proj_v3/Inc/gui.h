@@ -58,6 +58,16 @@ volatile button_pressed last_button_pressed;
 
 volatile int write_title;
 volatile int draw_volume;
+volatile int currently_read_bytes;
+
+int progress_bar_status;
+int actual_file;
+int next_file_to_write;
+int prev_file_to_write;
+
+uint8_t * prev_title;
+uint8_t * next_title;
+
 
 /* GUI functions */
 void initialize_button_values();
@@ -82,6 +92,8 @@ int is_pause_button_x_axis();
 int is_prevsong_button_x_axis();
 int is_nextsong_button_x_axis();
 void draw_volume_bar();
+void fill_progress_bar(int current_progress);
+void clear_progress_bar();
 //void start_touch_task(void *argument);
 
 #endif

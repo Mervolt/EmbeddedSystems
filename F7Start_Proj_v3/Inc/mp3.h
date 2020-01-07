@@ -50,6 +50,26 @@ int bitrate;
 int file_frame_amount;
 int current_frame_counter;
 
+/*length test*/
+int callback_count_for_length;
+int frame_sync_find_count;
+
+int offset_for_length;
+FIL file_for_length;
+char file_data_buffer_for_length[FILE_BUFFER_SIZE];
+char* file_data_buffer_ptr_for_length;
+int audio_bytes_amount_for_length;
+HMP3Decoder hMP3Decoder_for_length;
+MP3FrameInfo mp3FrameInfo_for_length;
+short* intermediate_data_buffer_ptr_for_length;
+int intermediate_data_buffer_offs_for_length;
+short intermediate_data_buffer_for_length[DMA_BUFFER_SIZE / 2];
+FRESULT is_anything_left_for_length;
+
+
+/*bytes read for file*/
+int FILE_SIZES[NUMBER_OF_FILES];
+
 
 /* DMA progress enum */
 enum
@@ -70,6 +90,7 @@ volatile song_state current_song_state;
 /* MP3 API functions */
 int mp3_init();
 int read_directory();
+int read_file_length();
 void play_directory();
 int next_file();
 int prev_file();

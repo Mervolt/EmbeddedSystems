@@ -61,6 +61,7 @@ int read_directory(char *path){
                 {
                     if (f_close(&file) == FR_OK)
                     {
+                        FILE_SIZES[FILE_COUNTER] = fno.fsize;
                         FILE_COUNTER++;
                     } else
                     {
@@ -84,7 +85,7 @@ int read_directory(char *path){
 
 int process_callback(int dma_offset){
     int bytes_read, offset;
-
+    //callback_count_for_length++;
     while (intermediate_data_buffer_offs < DMA_BUFFER_SIZE / 4)
     {
         /* count offset to skip frame header */
@@ -94,6 +95,8 @@ int process_callback(int dma_offset){
             audio_bytes_amount = 0;
             return 0;
         }
+        //frame_sync_find_count++;
+        
         /* decrease audio bytes by offset */
         audio_bytes_amount -= offset;
         /* set pointer to real audio data */
@@ -111,6 +114,7 @@ int process_callback(int dma_offset){
                 error = start_audio();
                 write_title=1;
             }
+            clear_progress_bar();
             return error;
         }
         MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
@@ -137,12 +141,16 @@ int process_callback(int dma_offset){
         return -1;
     }
 
+    currently_read_bytes += bytes_read;
+
     file_data_buffer_ptr = file_data_buffer;
     audio_bytes_amount += bytes_read;
     intermediate_data_buffer_offs -= DMA_BUFFER_SIZE / 4;
     intermediate_data_buffer_ptr = intermediate_data_buffer + intermediate_data_buffer_offs;
     dma_audio_buffer_offs = BUFFER_OFFSET_NONE;
 
+    //xprintf("Callback count: %d \n", callback_count_for_length++);
+    //xprintf("Sync find count: %d \n", frame_sync_find_count);
     return 0;
 }
 
@@ -160,16 +168,16 @@ void play_directory(){
 
     while(1){
         if(current_song_state==PLAYING){
-
             if(last_button_pressed==PREV_B){
-
                 xprintf("playing,prev\n");
                 err= prev_audio();
+                clear_progress_bar();
                 current_song_state=PLAYING;
 
             }else if(last_button_pressed==NEXT_B){
                 xprintf("playing,next\n");
                 err= next_audio();
+                clear_progress_bar();
                 current_song_state=PLAYING;
 
             }else if(last_button_pressed==PAUSE_B){
@@ -179,6 +187,7 @@ void play_directory(){
             }else if(last_button_pressed==STOP_B){
                 xprintf("playing,stop\n");
                 err = stop_audio();
+                clear_progress_bar();
 
             }else{//still playing for play_b,none_b
                 if(dma_audio_buffer_offs == BUFFER_OFFSET_HALF){
@@ -193,6 +202,7 @@ void play_directory(){
                     if (!err){
                         xprintf("End of file \n");
                         err = stop_audio();
+                        clear_progress_bar();
                         if(!err){
                             CURRENT_FILE = next_file();
                             err=start_audio();
@@ -207,11 +217,13 @@ void play_directory(){
             if(last_button_pressed==PREV_B){
                 xprintf("paused,prev\n");
                 err= prev_audio();
+                clear_progress_bar();
                 current_song_state=PAUSED;
 
             }else if(last_button_pressed==NEXT_B){
                 xprintf("paused,next\n");
                 err= next_audio();
+                clear_progress_bar();
                 current_song_state=PAUSED;
 
             }else if(last_button_pressed==PLAY_B){
@@ -219,10 +231,10 @@ void play_directory(){
                 err= resume_audio();
 
             }else if(last_button_pressed==STOP_B){
-
                 xprintf("paused,stop\n");
                 resume_audio();
                 err = stop_audio();
+                clear_progress_bar();
 
             }else{//do nothing for pause,none,
             }
@@ -230,12 +242,14 @@ void play_directory(){
             if(last_button_pressed==PREV_B){
                 xprintf("stopped,prev\n");
                 CURRENT_FILE=prev_file();
+                clear_progress_bar();
                 write_title = 1;
                 current_song_state=STOPPED;
 
             }else if(last_button_pressed==NEXT_B){
                 xprintf("stoppped,next\n");
                 CURRENT_FILE=next_file();
+                clear_progress_bar();
                 write_title = 1;
                 current_song_state=STOPPED;
 
@@ -247,7 +261,7 @@ void play_directory(){
         }
 
         if(last_button_pressed==VOL_UP_B){
-            err =audio_volume_up(5);
+            err = audio_volume_up(5);
         }else if(last_button_pressed==VOL_DOWN_B){
             err = audio_volume_down(5);
         }
@@ -260,39 +274,14 @@ void play_directory(){
     }//end while
 }
 
-void get_song_duration(){
-
-    if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
-    {
-        xprintf("Failed to open file while getting duration%s!\n",FILES[CURRENT_FILE]);
-    }
-    file_data_buffer_ptr = file_data_buffer;
-    if (f_read(&file, file_data_buffer_ptr, FILE_BUFFER_SIZE, (void *) &audio_bytes_amount)
-        != F_OK)
-    {
-        xprintf("Failed to read from file while getting duration%s!\n",FILES[CURRENT_FILE]);
-    }
-
-    while(1){
-        process_callback(0);
-        if(audio_bytes_amount == 0)
-            break;
-        file_frame_amount+=1;
-    }
-    xprintf("File frame amount %d", file_frame_amount);
-    if (f_close(&file) != F_OK){
-        xprintf("Failed to close file while getting duration %s !\n",FILES[CURRENT_FILE]);
-    }
-
-}
 
 
 int start_reading_file(){
     /* open File to play */
-    current_frame_counter = 0;
-
-    //get_song_duration();
-
+    //current_frame_counter = 0;
+    //callback_count_for_length = 0;
+    //frame_sync_find_count = 0;
+    currently_read_bytes = 0;
     if (f_open(&file, FILES[CURRENT_FILE], FA_READ) != FR_OK)
     {
         xprintf("Failed to open file %s!\n",FILES[CURRENT_FILE]);
@@ -450,7 +439,6 @@ int next_audio(){
 }
 
 int next_file(){
-    xprintf("Aktualny file %d \n", (CURRENT_FILE + 1) % FILE_COUNTER);
     return (CURRENT_FILE + 1) % FILE_COUNTER;
 }
 
