@@ -189,6 +189,14 @@ void play_directory(){
                 err = stop_audio();
                 clear_progress_bar();
 
+            }else if(last_button_pressed==NEW_B){
+                xprintf("playing,newsong\n");
+                err= stop_audio();
+                clear_progress_bar();
+                CURRENT_FILE= chosen_file;
+                err=start_audio();
+                write_title=1;
+
             }else{//still playing for play_b,none_b
                 if(dma_audio_buffer_offs == BUFFER_OFFSET_HALF){
                     err = process_callback(0);
@@ -236,6 +244,14 @@ void play_directory(){
                 err = stop_audio();
                 clear_progress_bar();
 
+            }else if(last_button_pressed=NEW_B){
+                xprintf("paused,newsong\n");
+                resume_audio();
+                err= stop_audio();
+                clear_progress_bar();
+                CURRENT_FILE= chosen_file;
+                err=start_audio();
+                write_title=1;
             }else{//do nothing for pause,none,
             }
         }else if(current_song_state==STOPPED){
@@ -256,6 +272,12 @@ void play_directory(){
             }else if(last_button_pressed==PLAY_B){
                 xprintf("stopped,play\n");
                 err = start_audio();
+            }else if(last_button_pressed==NEW_B){
+                xprintf("stopped,newsong\n");
+                clear_progress_bar();
+                CURRENT_FILE= chosen_file;
+                err=start_audio();
+                write_title=1;
             }else{//do nothing for pause,stop,none,
             }
         }

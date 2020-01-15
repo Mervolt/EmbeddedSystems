@@ -39,6 +39,28 @@ int is_nextsong_button_x_axis(){
 int is_prevsong_button_x_axis(){
     return (TS_State.touchX[0] > 0.10*LCD_X_SIZE) && (TS_State.touchX[0] < 0.21*LCD_X_SIZE);
 }
+int is_songs_y_axis(){
+    return (TS_State.touchY[0] > top_exit_menu_bar_height*LCD_Y_SIZE ) ;
+}
+int is_songs_x_axis(){
+    return (TS_State.touchX[0] < songs_menu_width * LCD_X_SIZE);
+}
+int is_scroll_songs_x_axis(){
+    return (TS_State.touchX[0] > songs_menu_width * LCD_X_SIZE);
+}
+int is_scroll_songs_down_axis(){
+    return (TS_State.touchY[0] > (top_exit_menu_bar_height + songs_menu_height/2)*LCD_Y_SIZE ) ;
+}
+int is_scroll_songs_up_axis(){
+    return (TS_State.touchY[0] < (top_exit_menu_bar_height + songs_menu_height/2)*LCD_Y_SIZE ) ;
+}
+int is_exit_menu_y_axis(){
+    (TS_State.touchY[0] < top_exit_menu_bar_height*LCD_Y_SIZE ); 
+}
+
+int which_song_from_menu_selected(){
+    return (int)((TS_State.touchY[0] - song_menu_height*LCD_Y_SIZE) / song_menu_height);
+}
 
 
 void startResponsiveGUItask(void *argument){
@@ -63,38 +85,126 @@ void startResponsiveGUItask(void *argument){
     }
     if (TS_State.touchDetected){
 
-        if(is_button_y_axis()){
-            if(is_play_button_x_axis()){
-                last_button_pressed=PLAY_B;
+        if(current_active_menu==PLAYER_M){//player
+            if(is_button_y_axis()){
+                if(is_play_button_x_axis()){
+                    last_button_pressed=PLAY_B;
+                }
+                if(is_stop_button_x_axis()){
+                    last_button_pressed=STOP_B;
+                }
+                if(is_pause_button_x_axis()){
+                    last_button_pressed=PAUSE_B;
+                }
+                if(is_nextsong_button_x_axis()){
+                
+                last_button_pressed= NEXT_B;
+                }
+                if(is_prevsong_button_x_axis()){
+                    last_button_pressed=PREV_B;
+                }
+            }else if(is_top_button_y_axis()){
+                if(is_volume_down_x_axis()){
+                    last_button_pressed =VOL_DOWN_B;
+                }
+                if(is_menu_x_axis()){
+                    current_active_menu=MENU_M;
+                    menu_songs_position=0;
+                    chosen_file=0;
+                    draw_menu();
+                }
+                if(is_volume_up_x_axis()){
+                    last_button_pressed = VOL_UP_B;
+                }
             }
-            if(is_stop_button_x_axis()){
-                last_button_pressed=STOP_B;
+        }else{//menu
+            if(is_songs_y_axis()){
+                if(is_songs_x_axis()){
+                    chosen_file = which_song_from_menu_selected + menu_songs_position;
+                    if(chosen_file < FILE_COUNTER){
+                        last_button_pressed=NEW_B;
+                        current_active_menu=PLAYER_M;
+                        draw_player();
+                    }
+                }
+                if(is_scroll_songs_x_axis()){
+                    if(is_scroll_songs_down_axis()){
+                        if(menu_songs_position+ menu_songs_amount < FILE_COUNTER ){
+                                draw_menu_songs_title=1;
+                                menu_songs_position+=1;
+                        }
+                    }
+                    if(is_scroll_songs_up_axis()){
+                        if(menu_songs_position>0){
+                            draw_menu_songs_title=1;
+                            menu_songs_position-=1;
+                        }
+                    }
+                }
             }
-            if(is_pause_button_x_axis()){
-                last_button_pressed=PAUSE_B;
-            }
-            if(is_nextsong_button_x_axis()){
-              
-            last_button_pressed= NEXT_B;
-            }
-            if(is_prevsong_button_x_axis()){
-                last_button_pressed=PREV_B;
-            }
-        }else if(is_top_button_y_axis()){
-            if(is_volume_down_x_axis()){
-                last_button_pressed =VOL_DOWN_B;
-            }
-            if(is_menu_x_axis()){
-                last_button_pressed= MENU_B;
-                xprintf("TODO- menu????\n");
-            }
-            if(is_volume_up_x_axis()){
-                last_button_pressed = VOL_UP_B;
+            if(is_exit_menu_y_axis()){
+                current_active_menu=PLAYER_M;
+                draw_player();
             }
         }
     }
-    
   }
+}
+
+void draw_player(void){
+    draw_background();
+    draw_title(FILES[CURRENT_FILE] + 3);
+    write_title=0;
+    draw_volume_bar();
+    draw_volume=0;
+    fill_progress_bar(currently_read_bytes);
+}
+
+void draw_menu(void){
+    //reset background
+    BSP_LCD_SelectLayer(0);
+    BSP_LCD_Clear(LCD_COLOR_LIGHTBLUE);
+    //reset foreground
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_Clear(LCD_COLOR_WHITE);
+    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+
+    BSP_LCD_SetTextColor(LCD_COLOR_DARKGRAY);
+
+    //top exit bar
+    BSP_LCD_FillRect(0,0,LCD_X_SIZE-1,top_exit_menu_bar_height*LCD_Y_SIZE );
+    //next/prev songs 
+    BSP_LCD_FillRect(songs_menu_width*LCD_X_SIZE,top_exit_menu_bar_height*LCD_Y_SIZE,
+        scroll_songs_menu_width*LCD_X_SIZE-1,songs_menu_height*LCD_Y_SIZE-1);
+
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
+    BSP_LCD_DrawHLine(songs_menu_width*LCD_X_SIZE,split_scroll_songs_line_y*LCD_Y_SIZE,
+        scroll_songs_menu_width*LCD_X_SIZE-1);
+
+    //lines between songs names
+    int i=0;
+    for(;i<i<menu_songs_amount;i++){
+        BSP_LCD_DrawHLine(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE -1,
+            songs_menu_width*LCD_X_SIZE);
+    }
+  
+}
+
+void draw_menu_songs_titles(){
+
+    //erase previous songs names
+     BSP_LCD_SelectLayer(1);
+     BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+     int i=0;
+     for(;i<menu_songs_amount;i++){
+         BSP_LCD_FillRect(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
+            scroll_songs_menu_width*LCD_X_SIZE-2,song_menu_height*LCD_Y_SIZE-2);
+     }
+
+    for(i=0;i<menu_songs_amount;i++){
+        BSP_LCD_DisplayStringAt(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
+            FILES[menu_songs_position+i]+3,CENTER_MODE);
+    }
 }
 
 int lcd_start(void){
@@ -205,8 +315,16 @@ void draw_title(uint8_t *title){
 }
 
 void draw_background(void){
+    //reset background
+    BSP_LCD_SelectLayer(0);
+    BSP_LCD_Clear(LCD_COLOR_LIGHTBLUE);
+    //reset foreground
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_Clear(LCD_COLOR_WHITE);
+    BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+
+
   /* Select the LCD Background Layer  */
-  BSP_LCD_SelectLayer(1);
   BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     //title frame
   BSP_LCD_DrawRect(0.2*LCD_X_SIZE,0.05*LCD_Y_SIZE,0.6*LCD_X_SIZE,0.2*LCD_Y_SIZE);
@@ -344,141 +462,3 @@ void draw_fill_bar(float part){
 	BSP_LCD_FillRect(0,0.35*LCD_Y_SIZE +1 ,part *LCD_X_SIZE +1 ,0.2*LCD_Y_SIZE -1);
 
 }
-
-/*
-int pressed_in_Y_axis(int center, int radius)
-{
-    return (TS_State.touchY[0] < center + radius)
-        && (TS_State.touchY[0] > center - radius);
-}
-
-int pressed_in_X_axis(int center, int radius)
-{
-    return (TS_State.touchX[0] < center + radius)
-        && (TS_State.touchX[0] > center - radius);
-}
-
-void start_touch_task(void *argument)
-{
-    if (lcd_start() || initialize_touchscreen())
-    {
-        while (1) {}
-    }
-
-    draw_background();
-
-    player_state = STOPPED;
-
-    while (1)
-    {
-        if (redraw_title)
-        {
-            draw_title(FILES[CURRENT_FILE]);
-            redraw_title = 0;
-        }
-        vTaskDelay(200);
-        if (BSP_TS_GetState(&TS_State) != TS_OK)
-        {
-            while (1) {}
-        }
-        if (TS_State.touchDetected)
-        {
-            if (pressed_in_Y_axis(big_button_Y, big_button_radius))
-            {
-                if (pressed_in_X_axis(play_button_X, big_button_radius))
-                {
-                    switch (player_state)
-                    {
-                        case PLAYING:
-                            player_state = PAUSE_PRESSED;
-                            draw_play_button();
-                            break;
-
-                        case PAUSED:
-                            player_state = RESUME_PRESSED;
-                            draw_pause_button();
-                            break;
-
-                        case STOPPED:
-                            player_state = PLAY_PRESSED;
-                            draw_pause_button();
-                            break;
-
-                        default:
-                            break;
-                    }
-                } else if (pressed_in_X_axis(stop_button_X, big_button_radius))
-                {
-                    if (player_state == PLAYING)
-                    {
-                        player_state = STOP_PRESSED;
-                        draw_play_button();
-                    }
-                } else if (pressed_in_Y_axis(medium_button_Y, medium_button_radius))
-                {
-                    if (pressed_in_X_axis(skip_left_X, medium_button_radius))
-                    {
-                        switch (player_state)
-                        {
-                            case PLAYING:
-                                player_state = PREV_PRESSED_PLAYING;
-                                draw_pause_button();
-                                break;
-
-                            case PAUSED:
-                                player_state = PREV_PRESSED_PAUSED;
-                                draw_play_button();
-                                break;
-
-                            case STOPPED:
-                                player_state = PREV_PRESSED_STOPPED;
-                                draw_play_button();
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-                    if (pressed_in_X_axis(skip_right_X, medium_button_radius))
-                    {
-                        switch (player_state)
-                        {
-                            case PLAYING:
-                                player_state = NEXT_PRESSED_PLAYING;
-                                draw_pause_button();
-                                break;
-
-                            case PAUSED:
-                                player_state = NEXT_PRESSED_PAUSED;
-                                draw_play_button();
-                                break;
-
-                            case STOPPED:
-                                player_state = NEXT_PRESSED_STOPPED;
-                                draw_play_button();
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-                }
-            } else if (pressed_in_Y_axis(small_button_Y, small_button_radius))
-            {
-                if (player_state == PLAYING)
-                {
-                    if (pressed_in_X_axis(minus_button_X, small_button_radius))
-                    {
-                        player_state = VOL_DOWN_PRESSED;
-                        draw_volume(volume);
-                    } else if (pressed_in_X_axis(plus_button_X, small_button_radius))
-                    {
-                        player_state = VOL_UP_PRESSED;
-                        draw_volume(volume);
-                    }
-                }
-            }
-        }
-    }
-}
-*/

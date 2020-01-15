@@ -43,6 +43,11 @@ int plus_button_X;
 
 
 typedef enum{
+  PLAYER_M,
+  MENU_M,
+}active_menu;
+
+typedef enum{
   PREV_B,
   NEXT_B,
   PAUSE_B,
@@ -51,22 +56,28 @@ typedef enum{
   VOL_UP_B,
   VOL_DOWN_B,
   NONE_B,
-  MENU_B,
+  NEW_B,
 }button_pressed;
 
 volatile button_pressed last_button_pressed;
+volatile active_menu current_active_menu;
 
 volatile int write_title;
 volatile int draw_volume;
 volatile int currently_read_bytes;
+volatile int draw_menu_songs_title;
 
 int progress_bar_status;
 int actual_file;
 int next_file_to_write;
 int prev_file_to_write;
+int chosen_file;
+int menu_songs_amount;
+int menu_songs_position;
 
 uint8_t * prev_title;
 uint8_t * next_title;
+
 
 
 /* GUI functions */
@@ -94,6 +105,18 @@ int is_nextsong_button_x_axis();
 void draw_volume_bar();
 void fill_progress_bar(int current_progress);
 void clear_progress_bar();
+void draw_menu();
+void draw_player();
+void draw_menu_songs_titles();
 //void start_touch_task(void *argument);
+
+
+/*menu buttons sizes */
+float top_exit_menu_bar_height= 0.15f;
+float song_menu_height=0.17f;
+float scroll_songs_menu_width=0.1f;
+float songs_menu_width=0.9f;
+float songs_menu_height=0.85f;
+float split_scroll_songs_line_y=songs_menu_height/2 + top_exit_menu_bar_height;
 
 #endif

@@ -1538,9 +1538,6 @@ static void http_server_netconn_thread(void const *arg)
 
 uint8_t buff[AUDIO_OUT_BUFFER_SIZE];
 extern ApplicationTypeDef Appli_state;
-static uint8_t player_state = 0;
-static uint8_t buf_offs = BUFFER_OFFSET_NONE;
-static uint32_t fpos = 0;
 
 
 void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
@@ -1613,117 +1610,16 @@ void StartDefaultTask(void const * argument)
 
   //bitrate=0;
 
+  chosen_file=0;
+  current_active_menu= PLAYER_M;
+  menu_songs_amount=5;
+
   xprintf("Playlist initialized...\n");
   xprintf("Player ready!\n");
   while(1){
     play_directory();
   }
 
-
-
-
-  /* 
-  for(;;)
-  {
-
-  BSP_TS_GetState(&TS_State);
-  if(TS_State.touchDetected)
-  {
-    BSP_LCD_Clear(LCD_COLOR_WHITE);
-    BSP_LCD_SetTextColor(0x40FF00FF);
-    BSP_LCD_FillCircle(TS_State.touchX[0],TS_State.touchY[0],40);
-  }
-
-  char key = inkey();
-  
-  switch(key)
-  {
-    case 0: break;
-    case 'a':
-    {
-      xprintf("Odebrano polecenie a\n");
-      break;
-    }
-    
-    case 'p':
-    {
-      xprintf("play command...\n");
-      if(player_state) {xprintf("already playing\n"); break;}
-	  
-      FRESULT res;
-      res = f_open(&file,"1:/testwave.wav",FA_READ);
-      if(res==FR_OK)
-      {
-        xprintf("mp3 file open OK\n");
-      }
-      else
-      {
-        xprintf(", file open ERROR, res = %d\n",res);
-      }
-      player_state = 1;
-      BSP_AUDIO_OUT_Play((uint16_t*)&buff[0],AUDIO_OUT_BUFFER_SIZE);
-      fpos = 0;
-      buf_offs = BUFFER_OFFSET_NONE;
-      break;
-    }
-    default:
-    {
-      xprintf("Nie rozpoznane polecenie: %c = %02X\n",key,key);
-      break;
-    }
-  }
-  
-  if(player_state)
-  {
-    uint32_t br;
-    
-    if(buf_offs == BUFFER_OFFSET_HALF)
-    {
-      if(f_read(&file, 
-          &buff[0], 
-          AUDIO_OUT_BUFFER_SIZE/2,
-          (void *)&br) != FR_OK)
-      { 
-      BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW); 
-      xprintf("f_read error on half\n");
-      }
-      buf_offs = BUFFER_OFFSET_NONE;
-      fpos += br;
-      
-    }
-    
-    if(buf_offs == BUFFER_OFFSET_FULL)
-    {
-      if(f_read(&file, 
-          &buff[AUDIO_OUT_BUFFER_SIZE /2], 
-          AUDIO_OUT_BUFFER_SIZE/2, 
-          (void *)&br) != FR_OK)
-      { 
-        BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW); 
-        xprintf("f_read error on full\n");
-      } 
-
-      buf_offs = BUFFER_OFFSET_NONE;
-      fpos += br; 
-    }
-
-    if( (br < AUDIO_OUT_BUFFER_SIZE/2) && fpos )
-    {
-      xprintf("stop at eof\n");
-      BSP_AUDIO_OUT_Stop(CODEC_PDWN_SW);
-      f_close(&file); 
-      player_state = 0;
-      fpos = 0;
-      buf_offs = BUFFER_OFFSET_NONE;
-    }
-  }  //if(player_state)
-
-
-  vTaskDelay(1);
-   
-  }  
-  */
-  /* USER CODE END 5 */ 
 }
 
 /**
