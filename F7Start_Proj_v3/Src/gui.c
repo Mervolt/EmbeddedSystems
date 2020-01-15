@@ -55,11 +55,11 @@ int is_scroll_songs_up_axis(){
     return (TS_State.touchY[0] < (top_exit_menu_bar_height + songs_menu_height/2)*LCD_Y_SIZE ) ;
 }
 int is_exit_menu_y_axis(){
-    (TS_State.touchY[0] < top_exit_menu_bar_height*LCD_Y_SIZE ); 
+    return (TS_State.touchY[0] < top_exit_menu_bar_height*LCD_Y_SIZE ); 
 }
 
 int which_song_from_menu_selected(){
-    return (int)((TS_State.touchY[0] - song_menu_height*LCD_Y_SIZE) / song_menu_height);
+    return (int)((TS_State.touchY[0] - top_exit_menu_bar_height*LCD_Y_SIZE) / (song_menu_height*LCD_Y_SIZE));
 }
 
 
@@ -69,17 +69,27 @@ void startResponsiveGUItask(void *argument){
   initialize_touchscreen();
   draw_background();
   while(1){
-      if(write_title){
+      if(current_active_menu==PLAYER_M){
+        if(write_title){
           draw_title(FILES[CURRENT_FILE] + 3);
           write_title=0;
-      }
-      if(draw_volume){
+        }
+        if(draw_volume){
           draw_volume_bar();
           draw_volume=0;
+        }
+        fill_progress_bar(currently_read_bytes);
+      }else{
+          if(draw_menu_songs_title){
+            draw_menu_songs_titles();
+             draw_menu_songs_title=0;
+          }
+           
       }
+      
 
       vTaskDelay(200);
-      fill_progress_bar(currently_read_bytes);
+      
     if (BSP_TS_GetState(&TS_State) != TS_OK){
         while (1) {}
     }
@@ -111,6 +121,7 @@ void startResponsiveGUItask(void *argument){
                     current_active_menu=MENU_M;
                     menu_songs_position=0;
                     chosen_file=0;
+                    draw_menu_songs_title=1;
                     draw_menu();
                 }
                 if(is_volume_up_x_axis()){
@@ -119,8 +130,14 @@ void startResponsiveGUItask(void *argument){
             }
         }else{//menu
             if(is_songs_y_axis()){
+
+                xprintf("SONGS Y AXIS\n");
                 if(is_songs_x_axis()){
-                    chosen_file = which_song_from_menu_selected + menu_songs_position;
+
+                    xprintf("SONGS X AXIS\n");
+                    chosen_file = which_song_from_menu_selected() + menu_songs_position;
+                    xprintf("SONGS selected: %d out of %d, pos: %d\n",chosen_file,FILE_COUNTER,
+                        menu_songs_position);
                     if(chosen_file < FILE_COUNTER){
                         last_button_pressed=NEW_B;
                         current_active_menu=PLAYER_M;
@@ -128,6 +145,7 @@ void startResponsiveGUItask(void *argument){
                     }
                 }
                 if(is_scroll_songs_x_axis()){
+                        xprintf("NO SONGS X AXIS\n");
                     if(is_scroll_songs_down_axis()){
                         if(menu_songs_position+ menu_songs_amount < FILE_COUNTER ){
                                 draw_menu_songs_title=1;
@@ -143,6 +161,8 @@ void startResponsiveGUItask(void *argument){
                 }
             }
             if(is_exit_menu_y_axis()){
+                            xprintf("X-%f, Y-%f\n",TS_State.touchX[0],TS_State.touchY[0]);
+
                 current_active_menu=PLAYER_M;
                 draw_player();
             }
@@ -172,10 +192,11 @@ void draw_menu(void){
     BSP_LCD_SetTextColor(LCD_COLOR_DARKGRAY);
 
     //top exit bar
-    BSP_LCD_FillRect(0,0,LCD_X_SIZE-1,top_exit_menu_bar_height*LCD_Y_SIZE );
+    BSP_LCD_FillRect(0,0,LCD_X_SIZE,top_exit_menu_bar_height*LCD_Y_SIZE );
     //next/prev songs 
     BSP_LCD_FillRect(songs_menu_width*LCD_X_SIZE,top_exit_menu_bar_height*LCD_Y_SIZE,
-        scroll_songs_menu_width*LCD_X_SIZE-1,songs_menu_height*LCD_Y_SIZE-1);
+        scroll_songs_menu_width*LCD_X_SIZE,songs_menu_height*LCD_Y_SIZE+1);
+    
 
     BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     BSP_LCD_DrawHLine(songs_menu_width*LCD_X_SIZE,split_scroll_songs_line_y*LCD_Y_SIZE,
@@ -183,11 +204,12 @@ void draw_menu(void){
 
     //lines between songs names
     int i=0;
-    for(;i<i<menu_songs_amount;i++){
+    for(;i<menu_songs_amount;i++){
         BSP_LCD_DrawHLine(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE -1,
             songs_menu_width*LCD_X_SIZE);
     }
-  
+
+    draw_menu_songs_title=1;
 }
 
 void draw_menu_songs_titles(){
@@ -200,8 +222,9 @@ void draw_menu_songs_titles(){
          BSP_LCD_FillRect(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
             scroll_songs_menu_width*LCD_X_SIZE-2,song_menu_height*LCD_Y_SIZE-2);
      }
-
+    BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     for(i=0;i<menu_songs_amount;i++){
+       
         BSP_LCD_DisplayStringAt(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
             FILES[menu_songs_position+i]+3,CENTER_MODE);
     }

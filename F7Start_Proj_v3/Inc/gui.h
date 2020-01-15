@@ -112,11 +112,11 @@ void draw_menu_songs_titles();
 
 
 /*menu buttons sizes */
-float top_exit_menu_bar_height= 0.15f;
-float song_menu_height=0.17f;
-float scroll_songs_menu_width=0.1f;
-float songs_menu_width=0.9f;
-float songs_menu_height=0.85f;
-float split_scroll_songs_line_y=songs_menu_height/2 + top_exit_menu_bar_height;
+float top_exit_menu_bar_height;
+float song_menu_height;
+float scroll_songs_menu_width;
+float songs_menu_width;
+float songs_menu_height;
+float split_scroll_songs_line_y;
 
 #endif

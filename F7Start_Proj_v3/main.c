@@ -1564,6 +1564,13 @@ void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
+
+ top_exit_menu_bar_height= 0.15f;
+ song_menu_height=0.17f;
+ scroll_songs_menu_width=0.1f;
+ songs_menu_width=0.9f;
+ songs_menu_height=0.85f;
+ split_scroll_songs_line_y=songs_menu_height/2 + top_exit_menu_bar_height;
   /* init code for FATFS */
   MX_FATFS_Init();
 

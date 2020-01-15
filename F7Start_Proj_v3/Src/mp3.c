@@ -114,7 +114,8 @@ int process_callback(int dma_offset){
                 error = start_audio();
                 write_title=1;
             }
-            clear_progress_bar();
+            if(current_active_menu==PLAYER_M)
+                clear_progress_bar();
             return error;
         }
         MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
@@ -192,7 +193,8 @@ void play_directory(){
             }else if(last_button_pressed==NEW_B){
                 xprintf("playing,newsong\n");
                 err= stop_audio();
-                clear_progress_bar();
+                if(current_active_menu==PLAYER_M)
+                    clear_progress_bar();
                 CURRENT_FILE= chosen_file;
                 err=start_audio();
                 write_title=1;
@@ -210,7 +212,8 @@ void play_directory(){
                     if (!err){
                         xprintf("End of file \n");
                         err = stop_audio();
-                        clear_progress_bar();
+                        if(current_active_menu==PLAYER_M)
+                            clear_progress_bar();
                         if(!err){
                             CURRENT_FILE = next_file();
                             err=start_audio();
