@@ -1598,7 +1598,7 @@ void StartDefaultTask(void const * argument)
   xprintf("waiting for USB mass storage\n");
   
   do{
-    xprintf(".");
+    xprintf("."); 
     vTaskDelay(250);
   }while(Appli_state != APPLICATION_READY);
     

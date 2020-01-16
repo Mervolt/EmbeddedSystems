@@ -15,32 +15,26 @@
 #include "stm32f7xx_hal.h"
 #include "gui.h"
 
-/* buffer sizes */
 #define FILE_BUFFER_SIZE 8192
 #define DMA_BUFFER_SIZE 8192
 
-/* file name sizes */
 #define NUMBER_OF_FILES 20
 #define FILE_NAME_LENGTH 100
 
-/* buffers */
 char file_data_buffer[FILE_BUFFER_SIZE];
 short intermediate_data_buffer[DMA_BUFFER_SIZE / 2];
 char dma_audio_buffer[DMA_BUFFER_SIZE];
 
-/* buffer pointers and offsets */
 char *file_data_buffer_ptr;
 short *intermediate_data_buffer_ptr;
 int intermediate_data_buffer_offs;
 int audio_bytes_amount;
 uint8_t dma_audio_buffer_offs;
 
-/* audio variables */
 uint8_t volume;
 HMP3Decoder hMP3Decoder;
 MP3FrameInfo mp3FrameInfo;
 
-/* file system variables */
 extern ApplicationTypeDef Appli_state;
 char FILES[NUMBER_OF_FILES][FILE_NAME_LENGTH];
 int FILE_COUNTER;
@@ -67,11 +61,9 @@ short intermediate_data_buffer_for_length[DMA_BUFFER_SIZE / 2];
 FRESULT is_anything_left_for_length;
 
 
-/*bytes read for file*/
 int FILE_SIZES[NUMBER_OF_FILES];
 
 
-/* DMA progress enum */
 enum
 {
   BUFFER_OFFSET_NONE = 0,
@@ -87,10 +79,8 @@ typedef enum{
 
 volatile song_state current_song_state;
 
-/* MP3 API functions */
 int mp3_init();
 int read_directory();
-int read_file_length();
 void play_directory();
 int next_file();
 int prev_file();

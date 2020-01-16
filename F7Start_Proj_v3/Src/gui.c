@@ -65,9 +65,11 @@ int which_song_from_menu_selected(){
 
 void startResponsiveGUItask(void *argument){
   write_title=0;
+
   lcd_start();
-  initialize_touchscreen();
   draw_background();
+  initialize_touchscreen();
+  
   while(1){
       if(current_active_menu==PLAYER_M){
         if(write_title){
@@ -161,8 +163,7 @@ void startResponsiveGUItask(void *argument){
                 }
             }
             if(is_exit_menu_y_axis()){
-                            xprintf("X-%f, Y-%f\n",TS_State.touchX[0],TS_State.touchY[0]);
-
+                xprintf("quiting menu\n");
                 current_active_menu=PLAYER_M;
                 draw_player();
             }
@@ -202,6 +203,10 @@ void draw_menu(void){
     BSP_LCD_DrawHLine(songs_menu_width*LCD_X_SIZE,split_scroll_songs_line_y*LCD_Y_SIZE,
         scroll_songs_menu_width*LCD_X_SIZE-1);
 
+    //exit bar line
+    BSP_LCD_DrawHLine(0,top_exit_menu_bar_height*LCD_Y_SIZE +1,
+        LCD_X_SIZE);    
+
     //lines between songs names
     int i=0;
     for(;i<menu_songs_amount;i++){
@@ -220,12 +225,12 @@ void draw_menu_songs_titles(){
      int i=0;
      for(;i<menu_songs_amount;i++){
          BSP_LCD_FillRect(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
-            scroll_songs_menu_width*LCD_X_SIZE-2,song_menu_height*LCD_Y_SIZE-2);
+            songs_menu_width*LCD_X_SIZE,song_menu_height*LCD_Y_SIZE-2);
      }
     BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
     for(i=0;i<menu_songs_amount;i++){
        
-        BSP_LCD_DisplayStringAt(0,(top_exit_menu_bar_height+song_menu_height*i)*LCD_Y_SIZE,
+        BSP_LCD_DisplayStringAt(0,(top_exit_menu_bar_height+song_menu_height*i+song_menu_height/3)*LCD_Y_SIZE,
             FILES[menu_songs_position+i]+3,CENTER_MODE);
     }
 }
@@ -477,11 +482,4 @@ void draw_volume_bar(){
 
 }
 
-void draw_fill_bar(float part){
 
-	BSP_LCD_SelectLayer(0);
-	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-	
-	BSP_LCD_FillRect(0,0.35*LCD_Y_SIZE +1 ,part *LCD_X_SIZE +1 ,0.2*LCD_Y_SIZE -1);
-
-}

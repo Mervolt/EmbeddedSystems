@@ -247,7 +247,7 @@ void play_directory(){
                 err = stop_audio();
                 clear_progress_bar();
 
-            }else if(last_button_pressed=NEW_B){
+            }else if(last_button_pressed==NEW_B){
                 xprintf("paused,newsong\n");
                 resume_audio();
                 err= stop_audio();
@@ -434,6 +434,8 @@ int prev_audio(){
         xprintf("Failed to skip to previous audio[S]!\n");
         return 1;
     }
+
+
 
     CURRENT_FILE = prev_file();
 
